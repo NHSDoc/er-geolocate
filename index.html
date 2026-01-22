@@ -15,39 +15,45 @@
             --nhs-blue: #005eb8; --nhs-grey: #f0f4f5; --nhs-text: #212b32; 
             --success-green: #007f3b; --warning-amber: #fff9e6; --error-red: #d5281b;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
-        .container { width: 100%; max-width: 480px; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
-        .logo-header { text-align: center; margin-bottom: 20px; }
-        .app-logo { width: 130px; height: auto; margin-bottom: 5px; }
-        .app-title { color: var(--nhs-blue); font-size: 1.7rem; font-weight: bold; margin: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
+        .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
+        .logo-header { text-align: center; margin-bottom: 15px; }
+        .app-logo { width: 120px; height: auto; margin-bottom: 5px; }
+        .app-title { color: var(--nhs-blue); font-size: 1.6rem; font-weight: bold; margin: 0; }
         
-        .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
         .input-group { flex: 2; }
         .input-group.initials { flex: 1; }
-        .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--nhs-blue); }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
+        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: var(--nhs-blue); }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
 
-        .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.85rem; line-height: 1.4; color: #444; }
-        .probity-box input { transform: scale(1.5); margin-right: 12px; vertical-align: middle; }
+        .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.3; color: #444; }
+        .probity-box input { transform: scale(1.3); margin-right: 10px; vertical-align: middle; }
 
-        #result-area { display: none; width: 100%; margin-top: 10px; }
-        #export-container { padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; position: relative; }
-        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 10px; }
-        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 200px; }
+        #result-area { display: none; width: 100%; }
+        /* PDF Container - Redesigned for A5 Vertical Stack */
+        #export-container { padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
         
-        .qr-section { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 15px 0; border-top: 1px dashed #ccc; margin-top: 10px; }
-        #qrcode { padding: 10px; background: #fff; border: 1px solid #eee; }
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 8px; margin-bottom: 10px; }
+        .pdf-header-text h1 { color: var(--nhs-blue); font-size: 1.3rem; margin: 0; }
+        .pdf-header-text h2 { color: #666; font-size: 0.9rem; margin: 2px 0 0 0; }
+
+        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 12px; }
+        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 180px; }
         
-        .info-box { font-size: 0.8rem; line-height: 1.5; width: 100%; }
-        .info-box b { color: var(--nhs-blue); }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.4; }
+        .data-item b { color: var(--nhs-blue); display: block; font-size: 0.7rem; text-transform: uppercase; }
         
-        #facility-section { font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; display: none; }
-        .copyright { text-align: center; color: #999; font-size: 0.75rem; margin: 20px 0; }
+        .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 12px; }
+        #qrcode { display: inline-block; padding: 8px; border: 1px solid #eee; background: #fff; }
+        
+        #facility-section { font-size: 0.75rem; color: #555; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; display: none; }
+        .copyright { text-align: center; color: #999; font-size: 0.7rem; margin: 15px 0; }
     </style>
 </head>
 <body>
@@ -65,7 +71,7 @@
         </div>
         <div class="input-group">
             <label for="wardDept">Dept / Ward:</label>
-            <input type="text" id="wardDept" placeholder="e.g. Gastro" maxlength="40">
+            <input type="text" id="wardDept" placeholder="e.g. A&E" maxlength="30">
         </div>
     </div>
 
@@ -78,36 +84,37 @@
         </label>
     </div>
 
-    <div id="status" style="text-align:center; font-size: 0.85rem; color: #666; margin-bottom: 10px;">Accept declaration to begin.</div>
+    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Accept declaration to begin.</div>
 
     <div id="result-area">
         <div id="export-container">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                <div>
-                    <h1 style="color:var(--nhs-blue); font-size:1.4rem; margin:0; line-height:1;">ER GeoLocate</h1>
-                    <h2 style="color:#555; font-size:1rem; margin:4px 0 0 0;">Evidence: <span id="pdf-initials"></span></h2>
+            <div class="pdf-header">
+                <div class="pdf-header-text">
+                    <h1>ER GeoLocate</h1>
+                    <h2>Evidence ID: <span id="pdf-initials"></span></h2>
                 </div>
-                <img src="logo.png" style="width:85px; height:auto;">
+                <img src="logo.png" style="width:70px; height:auto;">
             </div>
             
             <div class="map-wrapper">
                 <img id="map-img" crossorigin="anonymous" src="">
             </div>
             
-            <div class="qr-section">
-                <div id="qrcode"></div>
-                <div class="info-box">
-                    <b>Clinician:</b> <span id="display-initials"></span><br>
-                    <b>Department:</b> <span id="dept-display"></span><br>
-                    <b>UK Network Time:</b> <span id="ind-time"></span><br>
-                    <b>Device Time:</b> <span id="dev-time"></span><br>
-                    <b>GPS:</b> <span id="coords-display"></span><br>
-                    <b>Ref:</b> <span id="session-display"></span>
-                </div>
+            <div class="data-grid">
+                <div class="data-item"><b>Clinician Initials</b><span id="display-initials"></span></div>
+                <div class="data-item"><b>Department</b><span id="dept-display"></span></div>
+                <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
+                <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
+                <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
+                <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
             </div>
 
             <div id="facility-section">
                 <b>Nearest Verified Facility:</b> <span id="facility-display"></span>
+            </div>
+
+            <div class="qr-area">
+                <div id="qrcode"></div>
             </div>
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
@@ -136,14 +143,14 @@
         const deptName = sanitize(document.getElementById('wardDept').value) || "Not Specified";
         
         capBtn.disabled = true;
-        status.innerText = "Processing UK-locked verification...";
+        status.innerText = "Syncing UK-locked verification...";
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const timeData = await fetchUKTime();
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            // Facility logic (Strict 200m / 0.2km)
+            // Facility logic (Strict 200m)
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -153,7 +160,6 @@
                 facSection.style.display = "none";
             }
 
-            // Initials tracking
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('dept-display').innerText = deptName;
@@ -162,8 +168,8 @@
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
-            // Map and QR
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+            
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
@@ -173,7 +179,7 @@
 
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('dlBtn').style.display = 'flex';
-            status.innerText = "Location Authenticated.";
+            status.innerText = "Verification Ready.";
             capBtn.disabled = false;
         }, (err) => { 
             status.innerText = "GPS Error. Check settings."; 
@@ -185,61 +191,4 @@
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
-            return new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-        } catch(e) { return new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)"; }
-    }
-
-    async function getNearestFacility(lat, lon) {
-        try {
-            const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
-            const data = await res.json();
-            if (data.status === "OK" && data.results.length > 0) {
-                const f = data.results[0];
-                const d = calculateDistance(lat, lon, f.geometry.location.lat, f.geometry.location.lng);
-                return { name: f.name, dist: d };
-            }
-            return null;
-        } catch(e) { return null; }
-    }
-
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371; 
-        const dLat = (lat2 - lat1) * Math.PI / 180;
-        const dLon = (lon2 - lon1) * Math.PI / 180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
-    }
-
-    function downloadPDF() {
-        const status = document.getElementById('status');
-        const dlBtn = document.getElementById('dlBtn');
-        status.innerText = "Preparing Evidence...";
-        dlBtn.disabled = true;
-
-        // Using scale: 2.5 for Samsung device stability
-        html2canvas(document.getElementById('export-container'), { 
-            useCORS: true, 
-            scale: 2.5,
-            logging: false 
-        }).then(canvas => {
-            const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a5');
-            const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', 10, 10, 128, 0);
-            
-            pdf.setFontSize(8);
-            pdf.setTextColor(150);
-            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 200, { align: 'center' });
-            
-            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
-            status.innerText = "Report Downloaded.";
-            dlBtn.disabled = false;
-        }).catch(err => {
-            console.error(err);
-            status.innerText = "Download Error. Please screenshot.";
-            dlBtn.disabled = false;
-        });
-    }
-</script>
-</body>
-</html>
+            return new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/
