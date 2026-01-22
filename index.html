@@ -18,7 +18,7 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
         .container { width: 100%; max-width: 480px; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
         .logo-header { text-align: center; margin-bottom: 20px; }
-        .app-logo { width: 140px; height: auto; margin-bottom: 5px; }
+        .app-logo { width: 130px; height: auto; margin-bottom: 5px; }
         .app-title { color: var(--nhs-blue); font-size: 1.7rem; font-weight: bold; margin: 0; }
         
         .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -27,7 +27,7 @@
         .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--nhs-blue); }
         .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
         
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
@@ -36,7 +36,7 @@
         .probity-box input { transform: scale(1.5); margin-right: 12px; vertical-align: middle; }
 
         #result-area { display: none; width: 100%; margin-top: 10px; }
-        #export-container { padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; }
+        #export-container { padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; position: relative; }
         .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 10px; }
         #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 200px; }
         
@@ -46,7 +46,7 @@
         .info-box { font-size: 0.8rem; line-height: 1.5; width: 100%; }
         .info-box b { color: var(--nhs-blue); }
         
-        #facility-section { font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; }
+        #facility-section { font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 8px; margin-top: 8px; display: none; }
         .copyright { text-align: center; color: #999; font-size: 0.75rem; margin: 20px 0; }
     </style>
 </head>
@@ -65,7 +65,7 @@
         </div>
         <div class="input-group">
             <label for="wardDept">Dept / Ward:</label>
-            <input type="text" id="wardDept" placeholder="e.g., Gastro" maxlength="40">
+            <input type="text" id="wardDept" placeholder="e.g. Gastro" maxlength="40">
         </div>
     </div>
 
@@ -74,7 +74,7 @@
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
-            <b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate; falsifying location or device time/date is considered fraud.
+            <b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.
         </label>
     </div>
 
@@ -82,8 +82,11 @@
 
     <div id="result-area">
         <div id="export-container">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h2 style="color:var(--nhs-blue); font-size:1.2rem; margin:0;">Evidence: <span id="pdf-initials"></span></h2>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
+                <div>
+                    <h1 style="color:var(--nhs-blue); font-size:1.4rem; margin:0; line-height:1;">ER GeoLocate</h1>
+                    <h2 style="color:#555; font-size:1rem; margin:4px 0 0 0;">Evidence: <span id="pdf-initials"></span></h2>
+                </div>
                 <img src="logo.png" style="width:85px; height:auto;">
             </div>
             
@@ -103,11 +106,11 @@
                 </div>
             </div>
 
-            <div id="facility-section" style="display: none;">
+            <div id="facility-section">
                 <b>Nearest Verified Facility:</b> <span id="facility-display"></span>
             </div>
         </div>
-        <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">📄 Download PDF Evidence (A5)</button>
+        <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
     </div>
 </div>
 
@@ -133,44 +136,38 @@
         const deptName = sanitize(document.getElementById('wardDept').value) || "Not Specified";
         
         capBtn.disabled = true;
-        status.innerText = "Synchronizing UK-locked verification...";
+        status.innerText = "Processing UK-locked verification...";
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const timeData = await fetchUKTime();
-            const deviceTime = new Date().toLocaleString('en-GB');
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            // Geographic Facility Logic
+            // Facility logic (Strict 200m / 0.2km)
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
-            if (facility && facility.name) {
-                document.getElementById('facility-display').innerText = `${facility.name} (${facility.dist}km away)`;
+            if (facility && facility.dist <= 0.2) {
+                document.getElementById('facility-display').innerText = `${facility.name} (${(facility.dist * 1000).toFixed(0)}m)`;
                 facSection.style.display = "block";
             } else {
                 facSection.style.display = "none";
             }
 
-            // Display Data
+            // Initials tracking
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('dept-display').innerText = deptName;
-            document.getElementById('dev-time').innerText = deviceTime;
+            document.getElementById('ind-time').innerText = timeData;
+            document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
-            const timeEl = document.getElementById('ind-time');
-            timeEl.innerText = timeData.time;
-            timeEl.style.color = timeData.verified ? "#007f3b" : "#d5281b";
-
-            // Map & QR Load
-            const mapUrl = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
-            document.getElementById('map-img').src = mapUrl;
-
+            // Map and QR
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|USER:${initials}|UK:${timeData.time}|GPS:${lat},${lon}|DEPT:${deptName}`, 
+                text: `REF:${sid}|USER:${initials}|UK:${timeData}|GPS:${lat},${lon}`, 
                 width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H 
             });
 
@@ -179,19 +176,17 @@
             status.innerText = "Location Authenticated.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "Error: Please enable location services."; 
+            status.innerText = "GPS Error. Check settings."; 
             capBtn.disabled = false; 
-        }, { enableHighAccuracy: true });
+        });
     }
 
     async function fetchUKTime() {
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
-            return { time: new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
-        } catch(e) { 
-            return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)", verified: false }; 
-        }
+            return new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+        } catch(e) { return new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)"; }
     }
 
     async function getNearestFacility(lat, lon) {
@@ -199,9 +194,9 @@
             const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
             const data = await res.json();
             if (data.status === "OK" && data.results.length > 0) {
-                const target = data.results[0];
-                const dist = calculateDistance(lat, lon, target.geometry.location.lat, target.geometry.location.lng);
-                return { name: target.name, dist: dist.toFixed(2) };
+                const f = data.results[0];
+                const d = calculateDistance(lat, lon, f.geometry.location.lat, f.geometry.location.lng);
+                return { name: f.name, dist: d };
             }
             return null;
         } catch(e) { return null; }
@@ -215,42 +210,35 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     }
 
-    async function downloadPDF() {
-        const { jsPDF } = window.jspdf;
-        const element = document.getElementById('export-container');
-        const dlBtn = document.getElementById('dlBtn');
+    function downloadPDF() {
         const status = document.getElementById('status');
-
+        const dlBtn = document.getElementById('dlBtn');
+        status.innerText = "Preparing Evidence...";
         dlBtn.disabled = true;
-        status.innerText = "Building High-Res PDF Evidence...";
 
-        try {
-            const canvas = await html2canvas(element, { 
-                useCORS: true, 
-                scale: 2.5, 
-                logging: false,
-                allowTaint: false
-            });
-            
+        // Using scale: 2.5 for Samsung device stability
+        html2canvas(document.getElementById('export-container'), { 
+            useCORS: true, 
+            scale: 2.5,
+            logging: false 
+        }).then(canvas => {
+            const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a5');
             const imgData = canvas.toDataURL('image/png');
-            const pdfWidth = pdf.internal.pageSize.getWidth() - 20; 
-            const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-            pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, imgHeight);
+            pdf.addImage(imgData, 'PNG', 10, 10, 128, 0);
             
             pdf.setFontSize(8);
-            pdf.setTextColor(170);
-            pdf.text("\u00A9 Digestiv - Verified Evidence Report", pdf.internal.pageSize.getWidth() / 2, 200, { align: 'center' });
+            pdf.setTextColor(150);
+            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 200, { align: 'center' });
             
             pdf.save(`ER_Evidence_${Date.now()}.pdf`);
-            status.innerText = "Report Downloaded successfully.";
-        } catch (err) {
-            console.error(err);
-            status.innerText = "PDF Error. Try again.";
-        } finally {
+            status.innerText = "Report Downloaded.";
             dlBtn.disabled = false;
-        }
+        }).catch(err => {
+            console.error(err);
+            status.innerText = "Download Error. Please screenshot.";
+            dlBtn.disabled = false;
+        });
     }
 </script>
 </body>
