@@ -18,8 +18,7 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 480px; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
         .logo-header { text-align: center; margin-bottom: 20px; }
-        /* High-res scaling: display smaller than actual file size */
-        .app-logo { width: 120px; height: auto; margin-bottom: 5px; image-rendering: -webkit-optimize-contrast; }
+        .app-logo { width: 120px; height: auto; margin-bottom: 5px; }
         .app-title { color: var(--nhs-blue); font-size: 1.7rem; font-weight: bold; margin: 0; }
         
         .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
@@ -64,7 +63,7 @@
         </div>
         <div class="input-group">
             <label for="wardDept">Dept / Ward:</label>
-            <input type="text" id="wardDept" placeholder="e.g., Gastroenterology" maxlength="40">
+            <input type="text" id="wardDept" placeholder="e.g., Acute Medicine" maxlength="40">
         </div>
     </div>
 
@@ -77,7 +76,7 @@
         </label>
     </div>
 
-    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Accept declaration to begin.</div>
+    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Check probity box to begin.</div>
 
     <div id="result-area">
         <div id="export-container">
@@ -136,7 +135,17 @@
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
-            const timeData = await fetchUKTime();
+            
+            // UK-Locked Time regardless of local GPS
+            let ukTime = "Sync Error";
+            try {
+                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
+                const data = await res.json();
+                ukTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            } catch(e) { 
+                ukTime = new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)";
+            }
+
             const deviceTime = new Date().toLocaleString('en-GB');
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const facility = await getNearestFacility(lat, lon);
@@ -144,21 +153,18 @@
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('dept-display').innerText = deptName;
+            document.getElementById('ind-time').innerText = ukTime;
             document.getElementById('dev-time').innerText = deviceTime;
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('facility-display').innerText = facility.name;
             document.getElementById('session-display').innerText = sid;
             
-            const timeEl = document.getElementById('ind-time');
-            timeEl.innerText = timeData.time;
-            timeEl.style.color = timeData.verified ? "#007f3b" : "#d5281b";
-
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
 
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|USER:${initials}|UK:${timeData.time}|GPS:${lat},${lon}|DEPT:${deptName}`, 
+                text: `REF:${sid}|USER:${initials}|UK:${ukTime}|GPS:${lat},${lon}|DEPT:${deptName}`, 
                 width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H 
             });
 
@@ -168,34 +174,28 @@
         }, (err) => { status.innerText = "Error: GPS access denied."; capBtn.disabled = false; });
     }
 
-    async function fetchUKTime() {
-        try {
-            const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
-            const data = await res.json();
-            return { time: new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
-        } catch(e) { return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)", verified: false }; }
-    }
-
     async function getNearestFacility(lat, lon) {
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
             const data = await res.json();
-            return (data.status === "OK" && data.results.length > 0) ? { name: data.results[0].name, valid: true } : { name: "Search Unavailable", valid: false };
-        } catch(e) { return { name: "Search Failed", valid: false }; }
+            return (data.status === "OK" && data.results.length > 0) ? { name: data.results[0].name } : { name: "Search Unavailable" };
+        } catch(e) { return { name: "Search Failed" }; }
     }
 
     async function downloadPDF() {
         const { jsPDF } = window.jspdf;
         const element = document.getElementById('export-container');
-        // Higher scale (3) ensures logo and map text are crisp on A5 PDF
+        [span_7](start_span)// Scale 3 ensures high-resolution logo and map for A5 PDF[span_7](end_span)
         html2canvas(element, { useCORS: true, scale: 3, logging: false }).then(canvas => {
             const pdf = new jsPDF('p', 'mm', 'a5');
             const imgWidth = 128;
             const imgHeight = (canvas.height * imgWidth) / canvas.width;
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, imgWidth, imgHeight);
+            
             pdf.setFontSize(8);
             pdf.setTextColor(170);
-            pdf.text("\u00A9 Digestiv - Verified Clinical Evidence", 74, 200, { align: 'center' });
+            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 200, { align: 'center' });
+            
             pdf.save(`ER_Evidence_${Date.now()}.pdf`);
         });
     }
