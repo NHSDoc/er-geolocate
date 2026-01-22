@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ER GeoLocate</title>
+    
     <link rel="icon" type="image/png" href="logo.png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -11,45 +12,97 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
-        :root { --nhs-blue: #005eb8; --nhs-grey: #f0f4f5; --nhs-text: #212b32; --success-green: #007f3b; --warning-amber: #fff9e6; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; }
-        .container { width: 100%; max-width: 480px; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
+        :root { 
+            --nhs-blue: #005eb8; 
+            --nhs-grey: #f0f4f5; 
+            --nhs-text: #212b32; 
+            --success-green: #007f3b; 
+            --warning-amber: #fff9e6; 
+            --error-red: #d5281b;
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Arial, sans-serif; 
+            background-color: var(--nhs-grey); 
+            margin: 0; padding: 12px; 
+            display: flex; flex-direction: column; align-items: center; 
+        }
+
+        .container { 
+            width: 100%; max-width: 480px; 
+            background: white; padding: 18px; 
+            border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+            border-top: 6px solid var(--nhs-blue); 
+        }
+
         .logo-header { text-align: center; margin-bottom: 20px; }
-        .app-logo { width: 140px; margin-bottom: 5px; }
-        .app-title { color: var(--nhs-blue); font-size: 1.6rem; font-weight: bold; margin: 0; }
+        .app-logo { width: 130px; margin-bottom: 5px; }
+        .app-title { color: var(--nhs-blue); font-size: 1.7rem; font-weight: bold; margin: 0; }
+
         .input-group { margin-bottom: 15px; }
         .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--nhs-blue); }
-        .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
-        .btn { width: 100%; padding: 16px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 15px; display: flex; align-items: center; justify-content: center; }
+        .input-group input { 
+            width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; 
+            box-sizing: border-box; font-size: 1rem; 
+        }
+
+        .btn { 
+            width: 100%; padding: 16px; border: none; border-radius: 8px; 
+            font-weight: bold; font-size: 1rem; cursor: pointer; 
+            margin-bottom: 15px; display: flex; align-items: center; justify-content: center; 
+        }
+
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; opacity: 0.6; }
         .btn-download { background: var(--success-green); color: white; }
-        .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 14px; border-radius: 8px; margin-bottom: 18px; font-size: 0.85rem; line-height: 1.4; color: #444; }
+
+        .probity-box { 
+            background: var(--warning-amber); border: 2px solid #ffcc00; 
+            padding: 14px; border-radius: 8px; margin-bottom: 18px; 
+            font-size: 0.85rem; line-height: 1.4; color: #444; 
+        }
         .probity-box input { transform: scale(1.5); margin-right: 12px; vertical-align: middle; }
+
         #result-area { display: none; width: 100%; }
-        /* PDF specific container styling */
         #export-container { padding: 15px; background: #fff; border: 1px solid #eee; border-radius: 8px; }
-        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 10px; }
-        #map-img { width: 100%; display: block; background: #f0f0f0; }
-        .qr-section { display: flex; align-items: center; gap: 15px; padding: 10px 0; border-top: 1px dashed #ccc; margin-top: 10px; }
+
+        .map-wrapper { 
+            width: 100%; border-radius: 6px; overflow: hidden; 
+            border: 1px solid #eee; margin-bottom: 10px; 
+        }
+        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 200px; }
+
+        .qr-section { 
+            display: flex; align-items: center; gap: 15px; 
+            padding: 10px 0; border-top: 1px dashed #ccc; margin-top: 10px; 
+        }
         #qrcode { padding: 5px; background: #fff; border: 1px solid #eee; }
+
         .info-box { font-size: 0.75rem; line-height: 1.4; flex: 1; }
         .info-box b { color: var(--nhs-blue); }
+        
+        .status-verified { color: var(--success-green); font-weight: bold; }
+        .status-unverified { color: var(--error-red); font-weight: bold; }
+
         .copyright { text-align: center; color: #999; font-size: 0.75rem; margin: 20px 0; }
-        .admin-links a { display: block; color: var(--nhs-blue); text-decoration: none; padding: 10px; background: #f0f7ff; margin-bottom: 8px; border-radius: 6px; font-size: 0.8rem; }
+        .admin-links a { 
+            display: block; color: var(--nhs-blue); text-decoration: none; 
+            padding: 10px; background: #f0f7ff; margin-bottom: 8px; 
+            border-radius: 6px; font-size: 0.8rem; 
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="logo-header">
-        <img src="logo.png" alt="Logo" class="app-logo">
+        <img src="logo.png" alt="ER GeoLocate Logo" class="app-logo">
         <h1 class="app-title">ER GeoLocate</h1>
     </div>
 
     <div class="input-group">
         <label for="wardDept">Department / Ward Name:</label>
-        <input type="text" id="wardDept" placeholder="e.g., Acute Medical Unit">
+        <input type="text" id="wardDept" placeholder="e.g., Acute Medical Unit" maxlength="50">
     </div>
 
     <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
@@ -67,7 +120,7 @@
         <div id="export-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <h2 style="color:var(--nhs-blue); font-size:1.1rem; margin:0;">Attendance Evidence</h2>
-                <img src="logo.png" style="width:60px;">
+                <img src="logo.png" style="width:50px;">
             </div>
             
             <div class="map-wrapper">
@@ -100,10 +153,17 @@
     </div>
 </div>
 
-<div class="copyright">©️ Digestiv</div>
+<div class="copyright">© Digestiv</div>
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
+
+    // XSS Sanitization
+    function sanitize(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
 
     function toggleButton() {
         document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
@@ -111,86 +171,117 @@
 
     async function captureData() {
         const status = document.getElementById('status');
-        const deptName = document.getElementById('wardDept').value || "Not Specified";
+        const capBtn = document.getElementById('capBtn');
+        const rawDept = document.getElementById('wardDept').value;
+        const deptName = sanitize(rawDept) || "Not Specified";
+        
+        // Anti-spam: Disable button during processing
+        capBtn.disabled = true;
         status.innerText = "Authenticating location and UK time...";
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             
-            // UK-Locked Time Fetch
-            let ukTime = "Sync Error";
-            try {
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
-                const data = await res.json();
-                ukTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { 
-                ukTime = new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Network Fail)";
-            }
-
+            // 1. UK-Locked Time with Strict Verification
+            const timeData = await fetchUKTime();
             const deviceTime = new Date().toLocaleString('en-GB');
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            // Address & Hospital Logic
+            // 2. Geo-Data
             const address = await getAddress(lat, lon);
             const hospitals = await getHospitals(lat, lon);
 
-            // UI Update
+            // 3. UI Updates
             document.getElementById('dept-display').innerText = deptName;
-            document.getElementById('ind-time').innerText = ukTime;
             document.getElementById('dev-time').innerText = deviceTime;
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('address-display').innerText = address;
             document.getElementById('hospital-list').innerText = hospitals;
             document.getElementById('session-display').innerText = sid;
             
+            const timeEl = document.getElementById('ind-time');
+            timeEl.innerText = timeData.time;
+            timeEl.className = timeData.verified ? "status-verified" : "status-unverified";
+
+            // 4. Map Load
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
 
+            // 5. QR Generation
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
-            new QRCode(qrDiv, { text: `REF:${sid}|UK:${ukTime}|GPS:${lat},${lon}`, width: 90, height: 90 });
+            new QRCode(qrDiv, { 
+                text: `REF:${sid}|UK:${timeData.time}|GPS:${lat},${lon}|DEPT:${deptName}`, 
+                width: 90, height: 90, 
+                correctLevel: QRCode.CorrectLevel.H 
+            });
 
             document.getElementById('result-area').style.display = 'block';
             status.innerText = "Verification Complete.";
-        }, (err) => { status.innerText = "Error: GPS access denied."; });
+            capBtn.disabled = false;
+        }, (err) => { 
+            status.innerText = "Error: GPS access denied."; 
+            capBtn.disabled = false;
+        }, { enableHighAccuracy: true, timeout: 10000 });
+    }
+
+    async function fetchUKTime() {
+        try {
+            const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
+            const data = await res.json();
+            return { 
+                time: new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), 
+                verified: true 
+            };
+        } catch(e) { 
+            return { 
+                time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified Local)", 
+                verified: false 
+            }; 
+        }
     }
 
     async function getAddress(lat, lon) {
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${API_KEY}`);
             const data = await res.json();
-            return data.results[0] ? data.results[0].formatted_address : "Unknown Address";
-        } catch(e) { return "Lookup Failed"; }
+            if (data.status === "OK") return data.results[0].formatted_address;
+            return "Address Error: " + data.status;
+        } catch(e) { return "Address Lookup Failed"; }
     }
 
     async function getHospitals(lat, lon) {
         try {
             const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&radius=5000&type=hospital&key=${API_KEY}`);
             const data = await res.json();
-            return data.results.slice(0, 2).map(h => h.name).join(', ') || "No major hospitals detected nearby";
-        } catch(e) { return "Proximity Search Unavailable"; }
+            if (data.status === "OK") return data.results.slice(0, 2).map(h => h.name).join(', ') || "No major hospitals detected";
+            return "Hospital Search Error: " + data.status;
+        } catch(e) { return "Hospital Search Failed"; }
     }
 
     async function downloadPDF() {
         const { jsPDF } = window.jspdf;
         const element = document.getElementById('export-container');
+        const status = document.getElementById('status');
         
-        html2canvas(element, { useCORS: true, scale: 3 }).then(canvas => {
-            // A5 Format: 148 x 210 mm
+        status.innerText = "Generating PDF...";
+
+        // Scale 2 is the best balance for mobile RAM
+        html2canvas(element, { useCORS: true, scale: 2, logging: false }).then(canvas => {
             const pdf = new jsPDF('p', 'mm', 'a5');
             const imgData = canvas.toDataURL('image/png');
             
-            // Calculate width to fit A5 with 10mm margins
-            const pdfWidth = 128; // 148 - 20 margin
+            const pdfWidth = 128; // Margin-aware A5 width
             const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
             pdf.addImage(imgData, 'PNG', 10, 10, pdfWidth, imgHeight);
             
-            // Footer Branding
+            // Sanitize Copyright Footer for PDF
             pdf.setFontSize(8);
-            pdf.setTextColor(180);
-            pdf.text("©️ Digestiv", 74, 200, { align: 'center' });
+            pdf.setTextColor(170);
+            pdf.text("\u00A9 Digestiv - Verified Clinical Evidence", 74, 200, { align: 'center' });
             
-            pdf.save(`ER_Evidence_${new Date().getTime()}.pdf`);
+            pdf.save(`ER_Report_${Date.now()}.pdf`);
+            status.innerText = "Report Saved.";
         });
     }
 </script>
