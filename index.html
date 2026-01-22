@@ -36,7 +36,6 @@
         .probity-box input { transform: scale(1.3); margin-right: 10px; vertical-align: middle; }
 
         #result-area { display: none; width: 100%; }
-        /* PDF Container - Redesigned for A5 Vertical Stack */
         #export-container { padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
         
         .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 8px; margin-bottom: 10px; }
@@ -67,11 +66,11 @@
     <div class="input-row">
         <div class="input-group initials">
             <label for="userInitials">Initials:</label>
-            <input type="text" id="userInitials" placeholder="JD" maxlength="3" style="text-transform: uppercase;">
+            <input type="text" id="userInitials" placeholder="JD" maxlength="2" style="text-transform: uppercase;">
         </div>
         <div class="input-group">
-            <label for="wardDept">Dept / Ward:</label>
-            <input type="text" id="wardDept" placeholder="e.g. A&E" maxlength="30">
+            <label for="wardDept">Speciality:</label>
+            <input type="text" id="wardDept" placeholder="e.g. Cardiology" maxlength="30">
         </div>
     </div>
 
@@ -102,7 +101,7 @@
             
             <div class="data-grid">
                 <div class="data-item"><b>Clinician Initials</b><span id="display-initials"></span></div>
-                <div class="data-item"><b>Department</b><span id="dept-display"></span></div>
+                <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
                 <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
                 <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
@@ -125,6 +124,32 @@
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
+
+    // OUH Specialties for randomization
+    const specialties = [
+        "Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", 
+        "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", 
+        "Renal Medicine", "Maternity", "Geratology", "Haematology"
+    ];
+
+    // Randomized Placeholder Logic
+    function updatePlaceholders() {
+        const initInput = document.getElementById('userInitials');
+        const specInput = document.getElementById('wardDept');
+
+        if (!initInput.value) {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
+        }
+
+        if (!specInput.value) {
+            specInput.placeholder = "e.g. " + specialties[Math.floor(Math.random() * specialties.length)];
+        }
+    }
+
+    // Update every 3 seconds
+    setInterval(updatePlaceholders, 3000);
+    updatePlaceholders();
 
     function sanitize(str) {
         const temp = document.createElement('div');
@@ -150,7 +175,6 @@
             const timeData = await fetchUKTime();
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            // Facility logic (Strict 200m)
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -191,4 +215,59 @@
         try {
             const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
-            return new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/
+            return new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+        } catch(e) { return new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)"; }
+    }
+
+    async function getNearestFacility(lat, lon) {
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
+            const data = await res.json();
+            if (data.status === "OK" && data.results.length > 0) {
+                const f = data.results[0];
+                const d = calculateDistance(lat, lon, f.geometry.location.lat, f.geometry.location.lng);
+                return { name: f.name, dist: d };
+            }
+            return null;
+        } catch(e) { return null; }
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function downloadPDF() {
+        const status = document.getElementById('status');
+        const dlBtn = document.getElementById('dlBtn');
+        status.innerText = "Preparing PDF...";
+        dlBtn.disabled = true;
+
+        html2canvas(document.getElementById('export-container'), { 
+            useCORS: true, 
+            scale: 2.2,
+            logging: false 
+        }).then(canvas => {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a5');
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 8, 10, 132, 0);
+            
+            pdf.setFontSize(8);
+            pdf.setTextColor(150);
+            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 200, { align: 'center' });
+            
+            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            status.innerText = "Downloaded.";
+            dlBtn.disabled = false;
+        }).catch(err => {
+            status.innerText = "Error. Please screenshot.";
+            dlBtn.disabled = false;
+        });
+    }
+</script>
+</body>
+</html>
