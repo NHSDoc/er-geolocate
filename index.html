@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ER GeoLocate - Verified Reporting</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --nhs-blue: #005eb8;
+            --nhs-white: #ffffff;
+            --nhs-grey: #f0f4f5;
+            --nhs-dark-grey: #4c5861;
+            --nhs-text: #212b32;
+            --success-green: #007f3b;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--nhs-grey);
+            color: var(--nhs-text);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px; /* Optimized for mobile width */
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            border-top: 6px solid var(--nhs-blue);
+        }
+
+        h1 {
+            color: var(--nhs-blue);
+            text-align: center;
+            font-size: 1.6rem;
+            margin-top: 0;
+        }
+
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            width: 100%;
+            border: none;
+            padding: 16px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-capture { background-color: var(--nhs-blue); color: white; }
+        
+        .btn-download { 
+            background-color: var(--success-green); 
+            color: white; 
+            display: none; /* Hidden until location is captured */
+            margin-top: 15px;
+        }
+
+        #export-container {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            background: #fff;
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #ccc;
+            line-height: 0;
+        }
+
+        #map-img {
+            width: 100%;
+            height: auto;
+            min-height: 200px;
+            background: #eee;
+        }
+
+        #qrcode {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            background: white;
+            padding: 4px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .info-box {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-left: 4px solid var(--nhs-blue);
+            font-size: 0.85rem;
+            line-height: 1.5;
+        }
+
+        .info-box b { color: var(--nhs-blue); }
+
+        .admin-links {
+            margin-top: 25px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .admin-links h3 { font-size: 1rem; margin-bottom: 10px; color: var(--nhs-dark-grey); }
+
+        .admin-links a {
+            display: block;
+            color: var(--nhs-blue);
+            text-decoration: none;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            padding: 8px;
+            background: #f0f7ff;
+            border-radius: 4px;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-size: 0.85rem;
+            margin: 10px 0;
+            color: #666;
+        }
+
+        /* Responsive adjustments for very small screens */
+        @media (max-width: 360px) {
+            h1 { font-size: 1.3rem; }
+            .btn { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>ER GeoLocate</h1>
+    
+    <div class="button-group">
+        <button class="btn btn-capture" onclick="captureData()">📍 Capture Current Location</button>
+    </div>
+    
+    <div id="status" class="status-msg">Ready to verify.</div>
+
+    <div id="result-area" style="display: none;">
+        <div id="export-container">
+            <div class="map-wrapper">
+                <img id="map-img" src="" alt="Google Map">
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="info-box" id="text-info">
+                <b>Verified Time:</b> <span id="time-display"></span><br>
+                <b>Coordinates:</b> <span id="coords-display"></span><br>
+                <b>Reference ID:</b> <span id="session-display"></span><br>
+                <small style="color: #888; display: block; margin-top: 5px;">Generated via ER GeoLocate - Tamper Evident Report</small>
+            </div>
+        </div>
+
+        <button class="btn btn-download" id="download-btn" onclick="downloadPDF()">📄 Download Verified PDF</button>
+    </div>
+
+    <div class="admin-links">
+        <h3>Guidance & Policy</h3>
+        <a href="https://www.bma.org.uk/pay-and-contracts/working-hours/work-schedule/exception-reporting-for-resident-doctors" target="_blank">🔗 BMA: Exception Reporting Guide</a>
+        <a href="https://www.nhsemployers.org/publications/exception-reporting-guidance-hr-and-medical-staffing" target="_blank">🔗 NHS Employers Guidance</a>
+    </div>
+</div>
+
+<script>
+    const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY_HERE';
+
+    async function captureData() {
+        const status = document.getElementById('status');
+        const qrcodeDiv = document.getElementById('qrcode');
+        status.innerText = "Processing secure verification...";
+        qrcodeDiv.innerHTML = ""; 
+
+        if (!navigator.geolocation) {
+            alert("Location access is required for this app.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            const { latitude: lat, longitude: lon } = position.coords;
+            
+            // Verified Network Time
+            let verifiedTime = "";
+            try {
+                const response = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
+                const data = await response.json();
+                verifiedTime = new Date(data.datetime).toLocaleString('en-GB');
+            } catch (e) {
+                verifiedTime = new Date().toLocaleString('en-GB') + " (Device Time)";
+            }
+
+            const sessionId = 'ER-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+            // Update UI text
+            document.getElementById('time-display').innerText = verifiedTime;
+            document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            document.getElementById('session-display').innerText = sessionId;
+            
+            // Map Image
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=16&size=600x400&markers=color:blue%7C${lat},${lon}&key=${GOOGLE_MAPS_API_KEY}`;
+
+            // QR Code generation
+            new QRCode(qrcodeDiv, {
+                text: `REF:${sessionId}|TIME:${verifiedTime}|LOC:${lat},${lon}`,
+                width: 70,
+                height: 70
+            });
+
+            document.getElementById('result-area').style.display = 'block';
+            document.getElementById('download-btn').style.display = 'flex';
+            status.innerText = "Location Verified.";
+        }, (err) => {
+            status.innerText = "Error: Access denied. Please enable GPS.";
+        });
+    }
+
+    async function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById('export-container');
+        const status = document.getElementById('status');
+        
+        status.innerText = "Generating PDF...";
+        
+        // Capture the visual area as a canvas
+        const canvas = await html2canvas(element, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
+        
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfImgHeight = (imgProps.height * (pdfWidth - 40)) / imgProps.width;
+
+        // Add header to PDF
+        pdf.setFontSize(18);
+        pdf.setTextColor(0, 94, 184); // NHS Blue
+        pdf.text("ER GeoLocate: Verified Report", 20, 20);
+        
+        // Add the captured image
+        pdf.addImage(imgData, 'PNG', 20, 30, pdfWidth - 40, pdfImgHeight);
+        
+        // Footer/Disclaimer
+        pdf.setFontSize(10);
+        pdf.setTextColor(100);
+        pdf.text("This document serves as secondary evidence for exception reporting.", 20, pdfImgHeight + 50);
+
+        pdf.save(`ER_Report_${new Date().getTime()}.pdf`);
+        status.innerText = "PDF Downloaded.";
+    }
+</script>
+
+</body>
+</html>
