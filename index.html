@@ -18,10 +18,13 @@
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 12px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 480px; background: white; padding: 18px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
         .logo-header { text-align: center; margin-bottom: 20px; }
-        .app-logo { width: 130px; margin-bottom: 5px; }
+        /* High-res scaling: display smaller than actual file size */
+        .app-logo { width: 120px; height: auto; margin-bottom: 5px; image-rendering: -webkit-optimize-contrast; }
         .app-title { color: var(--nhs-blue); font-size: 1.7rem; font-weight: bold; margin: 0; }
         
-        .input-group { margin-bottom: 15px; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 15px; }
+        .input-group { flex: 2; }
+        .input-group.initials { flex: 1; }
         .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--nhs-blue); }
         .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1rem; }
         
@@ -43,12 +46,7 @@
         
         .info-box { font-size: 0.8rem; line-height: 1.5; width: 100%; }
         .info-box b { color: var(--nhs-blue); }
-        
-        .status-verified { color: var(--success-green); font-weight: bold; }
-        .status-unverified { color: var(--error-red); font-weight: bold; }
-        
         .copyright { text-align: center; color: #999; font-size: 0.75rem; margin: 20px 0; }
-        .text-invisible { color: #ffffff !important; }
     </style>
 </head>
 <body>
@@ -59,9 +57,15 @@
         <h1 class="app-title">ER GeoLocate</h1>
     </div>
 
-    <div class="input-group">
-        <label for="wardDept">Department / Ward Name:</label>
-        <input type="text" id="wardDept" placeholder="e.g., Gastroenterology" maxlength="50">
+    <div class="input-row">
+        <div class="input-group initials">
+            <label for="userInitials">Initials:</label>
+            <input type="text" id="userInitials" placeholder="JD" maxlength="3" style="text-transform: uppercase;">
+        </div>
+        <div class="input-group">
+            <label for="wardDept">Dept / Ward:</label>
+            <input type="text" id="wardDept" placeholder="e.g., Gastroenterology" maxlength="40">
+        </div>
     </div>
 
     <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
@@ -78,12 +82,123 @@
     <div id="result-area">
         <div id="export-container">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <h2 style="color:var(--nhs-blue); font-size:1.2rem; margin:0;">Attendance Evidence</h2>
-                <img src="logo.png" style="width:80px;">
+                <h2 style="color:var(--nhs-blue); font-size:1.2rem; margin:0;">Evidence: <span id="pdf-initials"></span></h2>
+                <img src="logo.png" style="width:80px; height:auto;">
             </div>
             
             <div class="map-wrapper">
                 <img id="map-img" crossorigin="anonymous" src="">
             </div>
             
-            <div class="qr-
+            <div class="qr-section">
+                <div id="qrcode"></div>
+                <div class="info-box">
+                    <b>Clinician Initials:</b> <span id="display-initials"></span><br>
+                    <b>Department:</b> <span id="dept-display"></span><br>
+                    <b>UK Network Time:</b> <span id="ind-time"></span><br>
+                    <b>Device Time:</b> <span id="dev-time"></span><br>
+                    <b>GPS:</b> <span id="coords-display"></span><br>
+                    <b>Ref:</b> <span id="session-display"></span>
+                </div>
+            </div>
+
+            <div style="font-size: 0.75rem; border-top: 1px solid #eee; padding-top: 8px;">
+                <b>Nearest Verified Facility:</b> <span id="facility-display"></span>
+            </div>
+        </div>
+        <button class="btn btn-download" onclick="downloadPDF()">📄 Download PDF Evidence (A5)</button>
+    </div>
+</div>
+
+<div class="copyright">© Digestiv</div>
+
+<script>
+    const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
+
+    function sanitize(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
+
+    function toggleButton() {
+        document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
+    }
+
+    async function captureData() {
+        const status = document.getElementById('status');
+        const capBtn = document.getElementById('capBtn');
+        const initials = sanitize(document.getElementById('userInitials').value).toUpperCase() || "N/A";
+        const deptName = sanitize(document.getElementById('wardDept').value) || "Not Specified";
+        
+        capBtn.disabled = true;
+        status.innerText = "Authenticating location and UK time...";
+        
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            const timeData = await fetchUKTime();
+            const deviceTime = new Date().toLocaleString('en-GB');
+            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            const facility = await getNearestFacility(lat, lon);
+
+            document.getElementById('display-initials').innerText = initials;
+            document.getElementById('pdf-initials').innerText = initials;
+            document.getElementById('dept-display').innerText = deptName;
+            document.getElementById('dev-time').innerText = deviceTime;
+            document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            document.getElementById('facility-display').innerText = facility.name;
+            document.getElementById('session-display').innerText = sid;
+            
+            const timeEl = document.getElementById('ind-time');
+            timeEl.innerText = timeData.time;
+            timeEl.style.color = timeData.verified ? "#007f3b" : "#d5281b";
+
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = ""; 
+            new QRCode(qrDiv, { 
+                text: `REF:${sid}|USER:${initials}|UK:${timeData.time}|GPS:${lat},${lon}|DEPT:${deptName}`, 
+                width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H 
+            });
+
+            document.getElementById('result-area').style.display = 'block';
+            status.innerText = "Verification Complete.";
+            capBtn.disabled = false;
+        }, (err) => { status.innerText = "Error: GPS access denied."; capBtn.disabled = false; });
+    }
+
+    async function fetchUKTime() {
+        try {
+            const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
+            const data = await res.json();
+            return { time: new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+        } catch(e) { return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}) + " (Unverified)", verified: false }; }
+    }
+
+    async function getNearestFacility(lat, lon) {
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
+            const data = await res.json();
+            return (data.status === "OK" && data.results.length > 0) ? { name: data.results[0].name, valid: true } : { name: "Search Unavailable", valid: false };
+        } catch(e) { return { name: "Search Failed", valid: false }; }
+    }
+
+    async function downloadPDF() {
+        const { jsPDF } = window.jspdf;
+        const element = document.getElementById('export-container');
+        // Higher scale (3) ensures logo and map text are crisp on A5 PDF
+        html2canvas(element, { useCORS: true, scale: 3, logging: false }).then(canvas => {
+            const pdf = new jsPDF('p', 'mm', 'a5');
+            const imgWidth = 128;
+            const imgHeight = (canvas.height * imgWidth) / canvas.width;
+            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 10, imgWidth, imgHeight);
+            pdf.setFontSize(8);
+            pdf.setTextColor(170);
+            pdf.text("\u00A9 Digestiv - Verified Clinical Evidence", 74, 200, { align: 'center' });
+            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+        });
+    }
+</script>
+</body>
+</html>
