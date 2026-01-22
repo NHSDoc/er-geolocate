@@ -32,7 +32,16 @@
             border-top: 6px solid var(--nhs-blue);
         }
 
-        h1 { color: var(--nhs-blue); text-align: center; font-size: 1.4rem; margin-top: 0; }
+        /* Logo Styling */
+        .app-logo {
+            width: 180px;
+            display: block;
+            margin: 0 auto 15px auto;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: var(--nhs-blue); }
+        .input-group input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
 
         .btn {
             width: 100%; padding: 16px; border: none; border-radius: 8px;
@@ -52,20 +61,23 @@
 
         .probity-box input { transform: scale(1.5); margin-right: 12px; vertical-align: middle; }
 
-        #result-area { display: none; } /* Hidden until button press */
+        #result-area { display: none; width: 100%; }
 
-        #export-container { margin-top: 15px; border: 1px solid #ddd; border-radius: 8px; padding: 10px; background: #fff; }
+        #export-container { 
+            margin-top: 15px; border: 1px solid #ddd; border-radius: 8px; 
+            padding: 15px; background: #fff; position: relative;
+        }
         
-        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 10px; }
+        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 15px; }
         #map-img { width: 100%; display: block; min-height: 250px; background: #f0f0f0; }
 
-        /* QR Code placed below map */
         .qr-wrapper { display: flex; justify-content: center; padding: 15px 0; border-top: 1px dashed #ccc; }
         #qrcode { background: white; padding: 10px; border: 1px solid #eee; }
 
-        .info-box { margin-top: 10px; font-size: 0.85rem; line-height: 1.5; border-top: 1px solid #eee; padding-top: 10px; }
-        
-        .copyright { text-align: center; color: #999; font-size: 0.75rem; margin-top: 20px; width: 100%; }
+        .info-box { margin-top: 10px; font-size: 0.82rem; line-height: 1.5; border-top: 1px solid #eee; padding-top: 10px; }
+        .info-box b { color: var(--nhs-blue); }
+
+        .copyright { text-align: center; color: #999; font-size: 0.75rem; margin: 20px 0; width: 100%; }
 
         .admin-links a {
             display: block; color: var(--nhs-blue); text-decoration: none;
@@ -76,7 +88,12 @@
 <body>
 
 <div class="container">
-    <h1>ER GeoLocate</h1>
+    <img src="logo.png" alt="ER GeoLocate Logo" class="app-logo">
+
+    <div class="input-group">
+        <label for="wardDept">Department / Ward Name:</label>
+        <input type="text" id="wardDept" placeholder="e.g., Acute Medical Unit">
+    </div>
 
     <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
     
@@ -87,12 +104,14 @@
         </label>
     </div>
 
-    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Accept declaration to proceed</div>
+    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Accept declaration to begin.</div>
 
     <div id="result-area">
         <div id="export-container">
+            <img src="logo.png" alt="ER GeoLocate" style="width: 120px; margin-bottom: 10px;">
+            
             <div class="map-wrapper">
-                <img id="map-img" src="" alt="Awaiting Map...">
+                <img id="map-img" crossorigin="anonymous" src="" alt="Map Loading...">
             </div>
             
             <div class="qr-wrapper">
@@ -100,10 +119,11 @@
             </div>
 
             <div class="info-box">
-                <b>Verified Independent Time:</b> <span id="ind-time">---</span><br>
+                <b>Department:</b> <span id="dept-display">---</span><br>
+                <b>Verified Independent Time:</b> <span id="ind-time">Syncing...</span><br>
                 <b>Device Recorded Time:</b> <span id="dev-time">---</span><br>
+                <b>Nearest Address:</b> <span id="address-display">---</span><br>
                 <b>GPS Coordinates:</b> <span id="coords-display">---</span><br>
-                <b>Nearby Facilities:</b> <div id="hospital-list" style="margin-top:5px; color:#555;">Searching...</div>
                 <b>Report Reference:</b> <span id="session-display">---</span>
             </div>
         </div>
@@ -128,76 +148,85 @@
 
     async function captureData() {
         const status = document.getElementById('status');
-        status.innerText = "Processing secure geo-verification...";
+        const deptName = document.getElementById('wardDept').value || "Not Specified";
+        status.innerText = "Authenticating location and time...";
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             
-            // 1. Independent Time (UK Network)
-            let independentTime = "Unavailable";
-            try {
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
-                const data = await res.json();
-                independentTime = new Date(data.datetime).toLocaleString('en-GB');
-            } catch(e) { independentTime = "Sync Error"; }
-
-            // 2. Device Time
+            let independentTime = await fetchVerifiedTime();
             const deviceTime = new Date().toLocaleString('en-GB');
-
-            // 3. Hospital Search (Google Places API simulation via Map Markers)
-            // In a live environment, a Places API call would go here. For the PDF output, we fetch nearby text markers.
-            const hospitalInfo = await getNearbyHospitals(lat, lon);
-            document.getElementById('hospital-list').innerHTML = hospitalInfo;
-
+            const address = await getAddress(lat, lon);
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
 
-            // UI Display
+            document.getElementById('dept-display').innerText = deptName;
             document.getElementById('ind-time').innerText = independentTime;
             document.getElementById('dev-time').innerText = deviceTime;
+            document.getElementById('address-display').innerText = address;
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
-            // Map with NHS Blue Pin (Custom Marker)
-            // Note: Google Static Maps allows custom icons via the 'icon' parameter
-            const nhsIconUrl = 'https://img.icons8.com/color/48/hospital-sign.png'; // Fallback icon for visual aid
-            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x400&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=16&size=600x400&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
 
-            // QR Code (Below Map)
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, {
-                text: `ID:${sid}|IND_TIME:${independentTime}|DEV_TIME:${deviceTime}|LOC:${lat},${lon}`,
-                width: 150, height: 150
+                text: `REF:${sid}|DEPT:${deptName}|TIME:${independentTime}|ADDR:${address}`,
+                width: 160, height: 160
             });
 
             document.getElementById('result-area').style.display = 'block';
-            status.innerText = "Evidence Generated Successfully.";
+            status.innerText = "Location Authenticated.";
             window.scrollTo(0, document.body.scrollHeight);
+        }, (err) => {
+            status.innerText = "Error: GPS access denied.";
         });
     }
 
-    async function getNearbyHospitals(lat, lon) {
-        // Since we are using Static Maps, we use a search-based string for the PDF metadata
-        // In practice, this would be a Google Places API call.
-        return "1. Local Health Centre (Est. 0.4mi)<br>2. General Infirmary (Est. 1.2mi)";
+    async function fetchVerifiedTime() {
+        try {
+            const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London');
+            const data = await res.json();
+            return new Date(data.datetime).toLocaleString('en-GB');
+        } catch(e) {
+            try {
+                const res2 = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
+                const data2 = await res2.json();
+                return new Date(data2.dateTime).toLocaleString('en-GB');
+            } catch(e2) {
+                return new Date().toLocaleString('en-GB') + " (Manual Check Required)";
+            }
+        }
+    }
+
+    async function getAddress(lat, lon) {
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lon}&key=${API_KEY}`);
+            const data = await res.json();
+            return data.results[0] ? data.results[0].formatted_address : "Address not found";
+        } catch(e) { return "Address Lookup Failed"; }
     }
 
     async function downloadPDF() {
         const { jsPDF } = window.jspdf;
-        const canvas = await html2canvas(document.getElementById('export-container'), { scale: 2 });
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        
-        pdf.setFontSize(16);
-        pdf.setTextColor(0, 94, 184);
-        pdf.text("ER GeoLocate: Attendance Verification", 20, 20);
-        
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 15, 30, 180, 0);
-        
-        pdf.setFontSize(10);
-        pdf.setTextColor(180);
-        pdf.text("©️ Digestiv", 100, 285, { align: 'center' });
+        const status = document.getElementById('status');
+        status.innerText = "Compiling PDF...";
 
-        pdf.save(`ER_Evidence_${new Date().getTime()}.pdf`);
+        const element = document.getElementById('export-container');
+        
+        // useCORS: true allows html2canvas to include the logo.png and Google Map
+        html2canvas(element, { useCORS: true, scale: 2, logging: false }).then(canvas => {
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 15, 20, 180, 0);
+            
+            pdf.setFontSize(8);
+            pdf.setTextColor(180);
+            pdf.text("©️ Digestiv", 105, 290, { align: 'center' });
+
+            pdf.save(`ER_Evidence_${new Date().getTime()}.pdf`);
+            status.innerText = "Report Downloaded.";
+        });
     }
 </script>
 
