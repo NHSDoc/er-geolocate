@@ -17,15 +17,19 @@
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
         .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
+        
         .logo-header { text-align: center; margin-bottom: 12px; }
         .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
-        .app-title { color: var(--nhs-blue); font-size: 1.4rem; font-weight: bold; margin: 0; }
         
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-group { flex: 2; }
-        .input-group.initials { flex: 1; }
+        .input-group { flex: 1; }
+        .input-group.initials { flex: 0.4; } /* Smaller initials box */
+        
         .input-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: var(--nhs-blue); }
         .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
+        
+        .employer-row { margin-bottom: 10px; }
+        .remember-box { font-size: 0.7rem; color: #666; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
         
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
@@ -45,9 +49,13 @@
         .map-wrapper { width: 100%; border-radius: 4px; overflow: hidden; border: 1px solid #eee; margin-bottom: 8px; }
         #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 140px; }
         
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; font-size: 0.65rem; line-height: 1.05; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; font-size: 0.65rem; line-height: 1.1; }
+        .data-item { overflow-wrap: break-word; word-wrap: break-word; hyphens: auto; }
         .data-item b { color: var(--nhs-blue); display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 1px; }
         
+        /* Full width for employer to allow wrapping */
+        .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
+
         .unverified-text { color: var(--error-red); font-weight: bold; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
@@ -62,7 +70,7 @@
 <div class="container">
     <div class="logo-header">
         <img src="logo.png" alt="ER GeoLocate Logo" class="app-logo">
-        <h1 class="app-title">ER GeoLocate</h1>
+        <h1 style="color:var(--nhs-blue); font-size:1.4rem; margin:0;">ER GeoLocate</h1>
     </div>
 
     <div class="input-row">
@@ -74,6 +82,15 @@
             <label for="wardDept">Speciality:</label>
             <input type="text" id="wardDept" placeholder="e.g. Cardiology" maxlength="30">
         </div>
+    </div>
+
+    <div class="input-group employer-row">
+        <label for="leadEmployer">Lead NHS Employer:</label>
+        <input list="nhsTrusts" id="leadEmployer" placeholder="Search Trust or Board...">
+        <datalist id="nhsTrusts"></datalist>
+        <label class="remember-box">
+            <input type="checkbox" id="rememberEmp"> Remember my employer
+        </label>
     </div>
 
     <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
@@ -102,10 +119,14 @@
             </div>
             
             <div class="data-grid">
+                <div class="data-item full-width"><b>Lead Employer</b><span id="employer-display"></span></div>
+                
                 <div class="data-item"><b>Clinician Initials</b><span id="display-initials"></span></div>
                 <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
+                
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
                 <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
+                
                 <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
                 <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
             </div>
@@ -126,7 +147,52 @@
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
-    const specialties = ["Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", "Renal Medicine", "Maternity", "Geratology", "Haematology", "Emergency Medicine"];
+    
+    // Condensed list of major Trusts/Boards for searching
+    const trusts = [
+        "Aneurin Bevan University Health Board", "Barking, Havering and Redbridge University Hospitals NHS Trust", 
+        "Barts Health NHS Trust", "Belfast Health and Social Care Trust", "Betsi Cadwaladr University Health Board",
+        "Birmingham Women's and Children's NHS Foundation Trust", "Cambridge University Hospitals NHS Foundation Trust",
+        "Cardiff and Vale University Health Board", "Chelsea and Westminster Hospital NHS Foundation Trust",
+        "Cwm Taf Morgannwg University Health Board", "Frimley Health NHS Foundation Trust",
+        "Great Ormond Street Hospital for Children NHS Foundation Trust", "Guy's and St Thomas' NHS Foundation Trust",
+        "Hampshire Hospitals NHS Foundation Trust", "Hywel Dda University Health Board",
+        "Imperial College Healthcare NHS Trust", "King's College Hospital NHS Foundation Trust",
+        "Leeds Teaching Hospitals NHS Trust", "London North West University Healthcare NHS Trust",
+        "Manchester University NHS Foundation Trust", "NHS Ayrshire and Arran", "NHS Borders",
+        "NHS Dumfries and Galloway", "NHS Fife", "NHS Forth Valley", "NHS Grampian",
+        "NHS Greater Glasgow and Clyde", "NHS Highland", "NHS Lanarkshire", "NHS Lothian",
+        "NHS Tayside", "Northern Health and Social Care Trust", "Northumbria Healthcare NHS Foundation Trust",
+        "Oxford University Hospitals NHS Foundation Trust", "Powys Teaching Health Board",
+        "Royal Free London NHS Foundation Trust", "Sandwell and West Birmingham Hospitals NHS Trust",
+        "Sheffield Teaching Hospitals NHS Foundation Trust", "South Eastern Health and Social Care Trust",
+        "Southern Health and Social Care Trust", "St George's University Hospitals NHS Foundation Trust",
+        "Swansea Bay University Health Board", "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
+        "University College London Hospitals NHS Foundation Trust", "University Hospitals Birmingham NHS Foundation Trust",
+        "University Hospitals Bristol and Weston NHS Foundation Trust", "University Hospitals of Derby and Burton NHS Foundation Trust",
+        "University Hospitals of Leicester NHS Trust", "Western Health and Social Care Trust"
+    ]; 
+    // Note: In production, this array would contain the full 230+ list. 
+    // Users can still TYPE their own if not listed.
+
+    // Populate Datalist
+    const datalist = document.getElementById('nhsTrusts');
+    trusts.forEach(t => {
+        let option = document.createElement('option');
+        option.value = t;
+        datalist.appendChild(option);
+    });
+
+    // Check Local Storage on Load
+    window.onload = function() {
+        const savedEmp = localStorage.getItem('er_employer');
+        if (savedEmp) {
+            document.getElementById('leadEmployer').value = savedEmp;
+            document.getElementById('rememberEmp').checked = true;
+        }
+    };
+
+    const specialties = ["Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", "Paediatrics", "Emergency Medicine", "Anaesthetics", "Trauma & Orthopaedics", "Renal Medicine", "Maternity", "Geratology", "Haematology"];
 
     function updatePlaceholders() {
         const initInput = document.getElementById('userInitials');
@@ -146,13 +212,20 @@
         document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
     }
 
+    // Helper to abbreviate long Trust names for the QR code
+    function abbreviateName(str) {
+        if (!str) return "NA";
+        // Get first letters of words longer than 2 chars (skips 'and', 'of')
+        // Or simple first letters of all words
+        return str.match(/\b(\w)/g).join('').toUpperCase();
+    }
+
     async function getStrictUKTime() {
+        // Redundancy 1 & 2: APIs
         const apiEndpoints = [
             'https://worldtimeapi.org/api/timezone/Europe/London',
             'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
         ];
-        
-        // Try APIs
         for (let url of apiEndpoints) {
             try {
                 const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
@@ -160,15 +233,20 @@
                 if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
             } catch (e) {}
         }
-
-        // Try Web Header
+        // Redundancy 3: TimeZoneDB
+        try {
+            const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
+            const data = await res.json();
+            if (data.formatted) return { time: new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+        } catch(e) {}
+        // Redundancy 4: Web Header
         try {
             const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
             const serverDate = res.headers.get('date');
             if (serverDate) return { time: new Date(serverDate).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
         } catch (e) {}
         
-        // Fallback to Device Time (Flagged)
+        // Fallback
         return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     }
 
@@ -177,6 +255,14 @@
         const capBtn = document.getElementById('capBtn');
         const initials = document.getElementById('userInitials').value.toUpperCase() || "N/A";
         const deptName = document.getElementById('wardDept').value || "Not Specified";
+        const employer = document.getElementById('leadEmployer').value || "Not Specified";
+        
+        // Handle Persistence
+        if (document.getElementById('rememberEmp').checked) {
+            localStorage.setItem('er_employer', employer);
+        } else {
+            localStorage.removeItem('er_employer');
+        }
         
         capBtn.disabled = true;
         status.innerText = "Syncing verification data...";
@@ -186,6 +272,7 @@
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            const empCode = abbreviateName(employer); // Short code for QR
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -206,6 +293,7 @@
 
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
+            document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
@@ -213,11 +301,12 @@
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
+            // Clean QR Generation (using empCode instead of full name to save space)
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|USER:${initials}|TIME:${timeObj.time}|VERIFIED:${timeObj.verified}`, 
-                width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M 
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
+                width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L // Lower correction level for less density
             });
 
             document.getElementById('result-area').style.display = 'block';
