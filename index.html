@@ -17,42 +17,44 @@
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
         .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
-        .logo-header { text-align: center; margin-bottom: 15px; }
-        .app-logo { width: 120px; height: auto; margin-bottom: 5px; }
-        .app-title { color: var(--nhs-blue); font-size: 1.6rem; font-weight: bold; margin: 0; }
+        .logo-header { text-align: center; margin-bottom: 12px; }
+        .app-logo { width: 110px; height: auto; margin-bottom: 2px; }
+        .app-title { color: var(--nhs-blue); font-size: 1.5rem; font-weight: bold; margin: 0; }
         
-        .input-row { display: flex; gap: 8px; margin-bottom: 12px; }
+        .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group { flex: 2; }
         .input-group.initials { flex: 1; }
-        .input-group label { display: block; font-size: 0.8rem; font-weight: bold; margin-bottom: 4px; color: var(--nhs-blue); }
-        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.95rem; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: var(--nhs-blue); }
+        .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
         
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
 
-        .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.8rem; line-height: 1.3; color: #444; }
-        .probity-box input { transform: scale(1.3); margin-right: 10px; vertical-align: middle; }
+        .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
+        .probity-box input { transform: scale(1.2); margin-right: 8px; vertical-align: middle; }
 
         #result-area { display: none; width: 100%; }
-        #export-container { padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
         
-        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 8px; margin-bottom: 10px; }
-        .pdf-header-text h1 { color: var(--nhs-blue); font-size: 1.3rem; margin: 0; }
-        .pdf-header-text h2 { color: #666; font-size: 0.9rem; margin: 2px 0 0 0; }
+        /* PDF Container - Tightened Spacing */
+        #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 8px; width: 100%; box-sizing: border-box; }
+        
+        .pdf-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 6px; margin-bottom: 8px; }
+        .pdf-header-text h1 { color: var(--nhs-blue); font-size: 1.2rem; margin: 0; }
+        .pdf-header-text h2 { color: #666; font-size: 0.8rem; margin: 0; }
 
-        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 12px; }
-        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 180px; }
+        .map-wrapper { width: 100%; border-radius: 6px; overflow: hidden; border: 1px solid #eee; margin-bottom: 8px; }
+        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 160px; }
         
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.4; }
-        .data-item b { color: var(--nhs-blue); display: block; font-size: 0.7rem; text-transform: uppercase; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; font-size: 0.7rem; line-height: 1.1; }
+        .data-item b { color: var(--nhs-blue); display: block; font-size: 0.65rem; text-transform: uppercase; margin-bottom: 1px; }
         
-        .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 12px; }
-        #qrcode { display: inline-block; padding: 8px; border: 1px solid #eee; background: #fff; }
+        .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 5px; }
+        #qrcode { display: inline-block; padding: 5px; border: 1px solid #eee; background: #fff; }
         
-        #facility-section { font-size: 0.75rem; color: #555; margin-top: 10px; border-top: 1px solid #eee; padding-top: 8px; display: none; }
-        .copyright { text-align: center; color: #999; font-size: 0.7rem; margin: 15px 0; }
+        #facility-section { font-size: 0.7rem; color: #555; margin-top: 5px; border-top: 1px solid #eee; padding-top: 5px; display: none; }
+        .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -83,7 +85,7 @@
         </label>
     </div>
 
-    <div id="status" style="text-align:center; font-size: 0.8rem; color: #666; margin-bottom: 10px;">Accept declaration to begin.</div>
+    <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div>
 
     <div id="result-area">
         <div id="export-container">
@@ -92,7 +94,7 @@
                     <h1>ER GeoLocate</h1>
                     <h2>Evidence ID: <span id="pdf-initials"></span></h2>
                 </div>
-                <img src="logo.png" style="width:70px; height:auto;">
+                <img src="logo.png" style="width:75px; height:auto;">
             </div>
             
             <div class="map-wrapper">
@@ -100,7 +102,7 @@
             </div>
             
             <div class="data-grid">
-                <div class="data-item"><b>Clinician Initials</b><span id="display-initials"></span></div>
+                <div class="data-item"><b>Clinician</b><span id="display-initials"></span></div>
                 <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
                 <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
@@ -125,29 +127,23 @@
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
 
-    // OUH Specialties for randomization
     const specialties = [
         "Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", 
         "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", 
         "Renal Medicine", "Maternity", "Geratology", "Haematology"
     ];
 
-    // Randomized Placeholder Logic
     function updatePlaceholders() {
         const initInput = document.getElementById('userInitials');
         const specInput = document.getElementById('wardDept');
-
         if (!initInput.value) {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
         }
-
         if (!specInput.value) {
-            specInput.placeholder = "e.g. " + specialties[Math.floor(Math.random() * specialties.length)];
+            specInput.placeholder = specialties[Math.floor(Math.random() * specialties.length)];
         }
     }
-
-    // Update every 3 seconds
     setInterval(updatePlaceholders, 3000);
     updatePlaceholders();
 
@@ -168,7 +164,7 @@
         const deptName = sanitize(document.getElementById('wardDept').value) || "Not Specified";
         
         capBtn.disabled = true;
-        status.innerText = "Syncing UK-locked verification...";
+        status.innerText = "Processing UK verification...";
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
@@ -192,21 +188,22 @@
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
-            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x350&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+            // Map Shrunk to 600x280 for PDF fit
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x280&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
                 text: `REF:${sid}|USER:${initials}|UK:${timeData}|GPS:${lat},${lon}`, 
-                width: 160, height: 160, correctLevel: QRCode.CorrectLevel.H 
+                width: 150, height: 150, correctLevel: QRCode.CorrectLevel.M 
             });
 
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('dlBtn').style.display = 'flex';
-            status.innerText = "Verification Ready.";
+            status.innerText = "Evidence Verified.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "GPS Error. Check settings."; 
+            status.innerText = "GPS Error."; 
             capBtn.disabled = false; 
         });
     }
@@ -243,28 +240,30 @@
     function downloadPDF() {
         const status = document.getElementById('status');
         const dlBtn = document.getElementById('dlBtn');
-        status.innerText = "Preparing PDF...";
+        status.innerText = "Generating PDF...";
         dlBtn.disabled = true;
 
         html2canvas(document.getElementById('export-container'), { 
             useCORS: true, 
-            scale: 2.2,
+            scale: 2.5,
             logging: false 
         }).then(canvas => {
             const { jsPDF } = window.jspdf;
             const pdf = new jsPDF('p', 'mm', 'a5');
             const imgData = canvas.toDataURL('image/png');
-            pdf.addImage(imgData, 'PNG', 8, 10, 132, 0);
+            
+            // Scaled to fit A5 with 8mm margins
+            pdf.addImage(imgData, 'PNG', 8, 8, 132, 0);
             
             pdf.setFontSize(8);
             pdf.setTextColor(150);
-            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 200, { align: 'center' });
+            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 205, { align: 'center' });
             
             pdf.save(`ER_Evidence_${Date.now()}.pdf`);
             status.innerText = "Downloaded.";
             dlBtn.disabled = false;
         }).catch(err => {
-            status.innerText = "Error. Please screenshot.";
+            status.innerText = "PDF Error.";
             dlBtn.disabled = false;
         });
     }
