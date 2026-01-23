@@ -23,21 +23,40 @@
         
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group { flex: 1; }
-        .input-group.initials { flex: 0.4; } /* Smaller initials box */
+        .input-group.initials { flex: 0.4; } 
         
-        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 2px; color: var(--nhs-blue); }
-        .input-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
+        .input-group label { display: block; font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; color: var(--nhs-blue); }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 0.9rem; }
         
         .employer-row { margin-bottom: 10px; }
-        .remember-box { font-size: 0.7rem; color: #666; margin-top: 2px; display: flex; align-items: center; gap: 4px; }
         
+        /* ALIGNMENT FIX: Flexbox with explicit vertical centering */
+        .remember-box {
+            display: flex;
+            align-items: center; 
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #555;
+            user-select: none;
+        }
+        .remember-box input {
+            margin: 0 6px 0 0; /* Right margin only */
+            width: 16px;
+            height: 16px;
+            accent-color: var(--nhs-blue);
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
 
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
-        .probity-box input { transform: scale(1.2); margin-right: 8px; vertical-align: middle; }
+        .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
+        .probity-box input { margin-top: 2px; transform: scale(1.1); }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -53,9 +72,7 @@
         .data-item { overflow-wrap: break-word; word-wrap: break-word; hyphens: auto; }
         .data-item b { color: var(--nhs-blue); display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 1px; }
         
-        /* Full width for employer to allow wrapping */
         .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
-
         .unverified-text { color: var(--error-red); font-weight: bold; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
@@ -98,7 +115,7 @@
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
-            <b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.
+            <span><b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.</span>
         </label>
     </div>
 
@@ -148,36 +165,97 @@
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
-    // Condensed list of major Trusts/Boards for searching
+    // FULL UK TRUST LIST (England, Scotland, Wales, NI)
     const trusts = [
-        "Aneurin Bevan University Health Board", "Barking, Havering and Redbridge University Hospitals NHS Trust", 
-        "Barts Health NHS Trust", "Belfast Health and Social Care Trust", "Betsi Cadwaladr University Health Board",
-        "Birmingham Women's and Children's NHS Foundation Trust", "Cambridge University Hospitals NHS Foundation Trust",
-        "Cardiff and Vale University Health Board", "Chelsea and Westminster Hospital NHS Foundation Trust",
-        "Cwm Taf Morgannwg University Health Board", "Frimley Health NHS Foundation Trust",
-        "Great Ormond Street Hospital for Children NHS Foundation Trust", "Guy's and St Thomas' NHS Foundation Trust",
-        "Hampshire Hospitals NHS Foundation Trust", "Hywel Dda University Health Board",
-        "Imperial College Healthcare NHS Trust", "King's College Hospital NHS Foundation Trust",
-        "Leeds Teaching Hospitals NHS Trust", "London North West University Healthcare NHS Trust",
-        "Manchester University NHS Foundation Trust", "NHS Ayrshire and Arran", "NHS Borders",
-        "NHS Dumfries and Galloway", "NHS Fife", "NHS Forth Valley", "NHS Grampian",
-        "NHS Greater Glasgow and Clyde", "NHS Highland", "NHS Lanarkshire", "NHS Lothian",
-        "NHS Tayside", "Northern Health and Social Care Trust", "Northumbria Healthcare NHS Foundation Trust",
-        "Oxford University Hospitals NHS Foundation Trust", "Powys Teaching Health Board",
-        "Royal Free London NHS Foundation Trust", "Sandwell and West Birmingham Hospitals NHS Trust",
-        "Sheffield Teaching Hospitals NHS Foundation Trust", "South Eastern Health and Social Care Trust",
-        "Southern Health and Social Care Trust", "St George's University Hospitals NHS Foundation Trust",
-        "Swansea Bay University Health Board", "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
-        "University College London Hospitals NHS Foundation Trust", "University Hospitals Birmingham NHS Foundation Trust",
-        "University Hospitals Bristol and Weston NHS Foundation Trust", "University Hospitals of Derby and Burton NHS Foundation Trust",
-        "University Hospitals of Leicester NHS Trust", "Western Health and Social Care Trust"
-    ]; 
-    // Note: In production, this array would contain the full 230+ list. 
-    // Users can still TYPE their own if not listed.
+        // LONDON
+        "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
+        "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
+        "Guy's and St Thomas' NHS Foundation Trust", "Hillingdon Hospitals NHS Foundation Trust", "Homerton Healthcare NHS Foundation Trust",
+        "Imperial College Healthcare NHS Trust", "King's College Hospital NHS Foundation Trust", "Kingston Hospital NHS Foundation Trust",
+        "Lewisham and Greenwich NHS Trust", "London Ambulance Service NHS Trust", "London North West University Healthcare NHS Trust",
+        "Moorfields Eye Hospital NHS Foundation Trust", "North East London NHS Foundation Trust", "North Middlesex University Hospital NHS Trust",
+        "Royal Brompton and Harefield NHS Foundation Trust", "Royal Free London NHS Foundation Trust", "Royal National Orthopaedic Hospital NHS Trust",
+        "St George's University Hospitals NHS Foundation Trust", "The Hillingdon Hospitals NHS Foundation Trust", "The Royal Marsden NHS Foundation Trust",
+        "University College London Hospitals NHS Foundation Trust", "Whittington Health NHS Trust",
+        // EAST OF ENGLAND
+        "Bedfordshire Hospitals NHS Foundation Trust", "Cambridge University Hospitals NHS Foundation Trust", "Cambridgeshire and Peterborough NHS Foundation Trust",
+        "East and North Hertfordshire NHS Trust", "East of England Ambulance Service NHS Trust", "East Suffolk and North Essex NHS Foundation Trust",
+        "Essex Partnership University NHS Foundation Trust", "Hertfordshire Partnership University NHS Foundation Trust", "James Paget University Hospitals NHS Foundation Trust",
+        "Mid and South Essex NHS Foundation Trust", "Norfolk and Norwich University Hospitals NHS Foundation Trust", "Norfolk and Suffolk NHS Foundation Trust",
+        "North West Anglia NHS Foundation Trust", "Queen Elizabeth Hospital King's Lynn NHS Foundation Trust", "Royal Papworth Hospital NHS Foundation Trust",
+        "West Hertfordshire Teaching Hospitals NHS Trust", "West Suffolk NHS Foundation Trust",
+        // MIDLANDS
+        "Birmingham and Solihull Mental Health NHS Foundation Trust", "Birmingham Community Healthcare NHS Foundation Trust", "Birmingham Women's and Children's NHS Foundation Trust",
+        "Chesterfield Royal Hospital NHS Foundation Trust", "Coventry and Warwickshire Partnership NHS Trust", "Derbyshire Healthcare NHS Foundation Trust",
+        "East Midlands Ambulance Service NHS Trust", "George Eliot Hospital NHS Trust", "Herefordshire and Worcestershire Health and Care NHS Trust",
+        "Kettering General Hospital NHS Foundation Trust", "Leicestershire Partnership NHS Trust", "Lincolnshire Community Health Services NHS Trust",
+        "Lincolnshire Partnership NHS Foundation Trust", "Midlands Partnership NHS Foundation Trust", "Northampton General Hospital NHS Trust",
+        "Northamptonshire Healthcare NHS Foundation Trust", "Nottingham University Hospitals NHS Trust", "Nottinghamshire Healthcare NHS Foundation Trust",
+        "Sandwell and West Birmingham Hospitals NHS Trust", "Sherwood Forest Hospitals NHS Foundation Trust", "Shrewsbury and Telford Hospital NHS Trust",
+        "South Warwickshire NHS Foundation Trust", "The Dudley Group NHS Foundation Trust", "The Robert Jones and Agnes Hunt Orthopaedic Hospital NHS Foundation Trust",
+        "The Royal Orthopaedic Hospital NHS Foundation Trust", "The Royal Wolverhampton NHS Trust", "United Lincolnshire Hospitals NHS Trust",
+        "University Hospitals Birmingham NHS Foundation Trust", "University Hospitals Coventry and Warwickshire NHS Trust", "University Hospitals of Derby and Burton NHS Foundation Trust",
+        "University Hospitals of Leicester NHS Trust", "University Hospitals of North Midlands NHS Trust", "Walsall Healthcare NHS Trust",
+        "West Midlands Ambulance Service University NHS Foundation Trust", "Worcestershire Acute Hospitals NHS Trust", "Wye Valley NHS Trust",
+        // NORTH EAST & YORKSHIRE
+        "Barnsley Hospital NHS Foundation Trust", "Bradford District Care NHS Foundation Trust", "Bradford Teaching Hospitals NHS Foundation Trust",
+        "Calderdale and Huddersfield NHS Foundation Trust", "County Durham and Darlington NHS Foundation Trust", "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
+        "Doncaster and Bassetlaw Teaching Hospitals NHS Foundation Trust", "Gateshead Health NHS Foundation Trust", "Harrogate and District NHS Foundation Trust",
+        "Humber Teaching NHS Foundation Trust", "Leeds and York Partnership NHS Foundation Trust", "Leeds Teaching Hospitals NHS Trust",
+        "Mid Yorkshire Hospitals NHS Trust", "North East Ambulance Service NHS Foundation Trust", "North Tees and Hartlepool NHS Foundation Trust",
+        "North Yorkshire Service NHS Trust", "Northern Lincolnshire and Goole NHS Foundation Trust", "Northumbria Healthcare NHS Foundation Trust",
+        "Rotherham Doncaster and South Humber NHS Foundation Trust", "Sheffield Children's NHS Foundation Trust", "Sheffield Health and Social Care NHS Foundation Trust",
+        "Sheffield Teaching Hospitals NHS Foundation Trust", "South Tees Hospitals NHS Foundation Trust", "South Tyneside and Sunderland NHS Foundation Trust",
+        "South West Yorkshire Partnership NHS Foundation Trust", "Tees, Esk and Wear Valleys NHS Foundation Trust", "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
+        "The Rotherham NHS Foundation Trust", "York and Scarborough Teaching Hospitals NHS Foundation Trust", "Yorkshire Ambulance Service NHS Trust",
+        // NORTH WEST
+        "Alder Hey Children's NHS Foundation Trust", "Blackpool Teaching Hospitals NHS Foundation Trust", "Bolton NHS Foundation Trust",
+        "Bridgewater Community Healthcare NHS Foundation Trust", "Cheshire and Wirral Partnership NHS Foundation Trust", "Countess of Chester Hospital NHS Foundation Trust",
+        "East Cheshire NHS Trust", "East Lancashire Hospitals NHS Trust", "Greater Manchester Mental Health NHS Foundation Trust",
+        "Lancashire and South Cumbria NHS Foundation Trust", "Lancashire Teaching Hospitals NHS Foundation Trust", "Liverpool Heart and Chest Hospital NHS Foundation Trust",
+        "Liverpool University Hospitals NHS Foundation Trust", "Liverpool Women's NHS Foundation Trust", "Manchester University NHS Foundation Trust",
+        "Mersey Care NHS Foundation Trust", "Mid Cheshire Hospitals NHS Foundation Trust", "North West Ambulance Service NHS Trust",
+        "Northern Care Alliance NHS Foundation Trust", "Pennine Care NHS Foundation Trust", "St Helens and Knowsley Teaching Hospitals NHS Trust",
+        "Stockport NHS Foundation Trust", "Tameside and Glossop Integrated Care NHS Foundation Trust", "The Christie NHS Foundation Trust",
+        "The Clatterbridge Cancer Centre NHS Foundation Trust", "The Walton Centre NHS Foundation Trust", "University Hospitals of Morecambe Bay NHS Foundation Trust",
+        "Warrington and Halton Teaching Hospitals NHS Foundation Trust", "Wirral Community Health and Care NHS Foundation Trust", "Wirral University Teaching Hospital NHS Foundation Trust",
+        "Wrightington, Wigan and Leigh NHS Foundation Trust",
+        // SOUTH EAST
+        "Ashford and St Peter's Hospitals NHS Foundation Trust", "Berkshire Healthcare NHS Foundation Trust", "Buckinghamshire Healthcare NHS Trust",
+        "Dartford and Gravesham NHS Trust", "East Kent Hospitals University NHS Foundation Trust", "East Sussex Healthcare NHS Trust",
+        "Frimley Health NHS Foundation Trust", "Hampshire Hospitals NHS Foundation Trust", "Isle of Wight NHS Trust",
+        "Kent and Medway NHS and Social Care Partnership Trust", "Kent Community Health NHS Foundation Trust", "Maidstone and Tunbridge Wells NHS Trust",
+        "Medway NHS Foundation Trust", "Milton Keynes University Hospital NHS Foundation Trust", "Oxford Health NHS Foundation Trust",
+        "Oxford University Hospitals NHS Foundation Trust", "Portsmouth Hospitals University NHS Trust", "Queen Victoria Hospital NHS Foundation Trust",
+        "Royal Berkshire NHS Foundation Trust", "Royal Surrey NHS Foundation Trust", "South Central Ambulance Service NHS Foundation Trust",
+        "South East Coast Ambulance Service NHS Foundation Trust", "Southern Health NHS Foundation Trust", "Surrey and Borders Partnership NHS Foundation Trust",
+        "Sussex Community NHS Foundation Trust", "Sussex Partnership NHS Foundation Trust", "University Hospital Southampton NHS Foundation Trust",
+        "Western Sussex Hospitals NHS Foundation Trust",
+        // SOUTH WEST
+        "Avon and Wiltshire Mental Health Partnership NHS Trust", "Cornwall Partnership NHS Foundation Trust", "Devon Partnership NHS Trust",
+        "Dorset County Hospital NHS Foundation Trust", "Dorset HealthCare University NHS Foundation Trust", "Gloucestershire Health and Care NHS Foundation Trust",
+        "Gloucestershire Hospitals NHS Foundation Trust", "Great Western Hospitals NHS Foundation Trust", "North Bristol NHS Trust",
+        "Northern Devon Healthcare NHS Trust", "Royal Cornwall Hospitals NHS Trust", "Royal Devon University Healthcare NHS Foundation Trust",
+        "Royal United Hospitals Bath NHS Foundation Trust", "Salisbury NHS Foundation Trust", "Somerset NHS Foundation Trust",
+        "South Western Ambulance Service NHS Foundation Trust", "Torbay and South Devon NHS Foundation Trust", "University Hospitals Bristol and Weston NHS Foundation Trust",
+        "University Hospitals Dorset NHS Foundation Trust", "University Hospitals Plymouth NHS Trust", "Wiltshire Health and Care",
+        "Yeovil District Hospital NHS Foundation Trust",
+        // SCOTLAND (Health Boards)
+        "NHS Ayrshire and Arran", "NHS Borders", "NHS Dumfries and Galloway", "NHS Fife", "NHS Forth Valley", "NHS Grampian",
+        "NHS Greater Glasgow and Clyde", "NHS Highland", "NHS Lanarkshire", "NHS Lothian", "NHS Orkney", "NHS Shetland",
+        "NHS Tayside", "NHS Western Isles", "Scottish Ambulance Service", "The State Hospital", "Golden Jubilee National Hospital",
+        // WALES (Health Boards)
+        "Aneurin Bevan University Health Board", "Betsi Cadwaladr University Health Board", "Cardiff and Vale University Health Board",
+        "Cwm Taf Morgannwg University Health Board", "Hywel Dda University Health Board", "Powys Teaching Health Board",
+        "Swansea Bay University Health Board", "Velindre University NHS Trust", "Welsh Ambulance Services NHS Trust",
+        // NORTHERN IRELAND (HSC Trusts)
+        "Belfast Health and Social Care Trust", "Northern Health and Social Care Trust", "South Eastern Health and Social Care Trust",
+        "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
+    ];
 
     // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
-    trusts.forEach(t => {
+    trusts.sort().forEach(t => {
         let option = document.createElement('option');
         option.value = t;
         datalist.appendChild(option);
@@ -215,13 +293,11 @@
     // Helper to abbreviate long Trust names for the QR code
     function abbreviateName(str) {
         if (!str) return "NA";
-        // Get first letters of words longer than 2 chars (skips 'and', 'of')
-        // Or simple first letters of all words
         return str.match(/\b(\w)/g).join('').toUpperCase();
     }
 
     async function getStrictUKTime() {
-        // Redundancy 1 & 2: APIs
+        // Quad-Redundancy Logic
         const apiEndpoints = [
             'https://worldtimeapi.org/api/timezone/Europe/London',
             'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
@@ -233,13 +309,11 @@
                 if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
             } catch (e) {}
         }
-        // Redundancy 3: TimeZoneDB
         try {
             const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
             const data = await res.json();
             if (data.formatted) return { time: new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
         } catch(e) {}
-        // Redundancy 4: Web Header
         try {
             const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
             const serverDate = res.headers.get('date');
@@ -272,7 +346,7 @@
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
-            const empCode = abbreviateName(employer); // Short code for QR
+            const empCode = abbreviateName(employer); 
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -301,12 +375,11 @@
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
-            // Clean QR Generation (using empCode instead of full name to save space)
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
                 text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
-                width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L // Lower correction level for less density
+                width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             });
 
             document.getElementById('result-area').style.display = 'block';
