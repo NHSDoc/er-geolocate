@@ -17,6 +17,9 @@
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
         .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
+        .logo-header { text-align: center; margin-bottom: 12px; }
+        .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
+        .app-title { color: var(--nhs-blue); font-size: 1.4rem; font-weight: bold; margin: 0; }
         
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group { flex: 2; }
@@ -26,38 +29,50 @@
         
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
+        .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
 
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
+        .probity-box input { transform: scale(1.2); margin-right: 8px; vertical-align: middle; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
         
+        .pdf-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 5px; margin-bottom: 8px; }
+        .pdf-header-text h1 { color: var(--nhs-blue); font-size: 1.1rem; margin: 0; }
+        .pdf-header-text h2 { color: #666; font-size: 0.75rem; margin: 0; }
+
+        .map-wrapper { width: 100%; border-radius: 4px; overflow: hidden; border: 1px solid #eee; margin-bottom: 8px; }
+        #map-img { width: 100%; display: block; background: #f0f0f0; min-height: 140px; }
+        
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 8px; font-size: 0.65rem; line-height: 1.05; }
         .data-item b { color: var(--nhs-blue); display: block; font-size: 0.6rem; text-transform: uppercase; margin-bottom: 1px; }
         
-        .unverified-tag { color: var(--error-red); font-weight: bold; }
+        .unverified-text { color: var(--error-red); font-weight: bold; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
         #qrcode { display: inline-block; padding: 4px; border: 1px solid #eee; background: #fff; }
+        
+        #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
+        .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align:center; margin-bottom:12px;">
-        <img src="logo.png" style="width:100px; height:auto;">
-        <h1 style="color:var(--nhs-blue); font-size:1.4rem; margin:0;">ER GeoLocate</h1>
+    <div class="logo-header">
+        <img src="logo.png" alt="ER GeoLocate Logo" class="app-logo">
+        <h1 class="app-title">ER GeoLocate</h1>
     </div>
 
     <div class="input-row">
         <div class="input-group initials">
-            <label>Initials:</label>
-            <input type="text" id="userInitials" maxlength="2" style="text-transform: uppercase;">
+            <label for="userInitials">Initials:</label>
+            <input type="text" id="userInitials" placeholder="--" maxlength="2" style="text-transform: uppercase;">
         </div>
         <div class="input-group">
-            <label>Speciality:</label>
-            <input type="text" id="wardDept" maxlength="30">
+            <label for="wardDept">Speciality:</label>
+            <input type="text" id="wardDept" placeholder="e.g. Cardiology" maxlength="30">
         </div>
     </div>
 
@@ -65,7 +80,7 @@
     
     <div class="probity-box">
         <label>
-            <input type="checkbox" id="probityCheck" onchange="document.getElementById('capBtn').disabled = !this.checked">
+            <input type="checkbox" id="probityCheck" onchange="toggleButton()">
             <b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.
         </label>
     </div>
@@ -74,16 +89,16 @@
 
     <div id="result-area">
         <div id="export-container">
-            <div style="display:flex; justify-content:space-between; border-bottom: 2px solid var(--nhs-blue); padding-bottom:5px; margin-bottom:8px;">
-                <div>
-                    <h1 style="color:var(--nhs-blue); font-size:1.1rem; margin:0;">ER GeoLocate</h1>
-                    <h2 style="color:#666; font-size:0.75rem; margin:0;">Evidence ID: <span id="pdf-initials"></span></h2>
+            <div class="pdf-header">
+                <div class="pdf-header-text">
+                    <h1>ER GeoLocate</h1>
+                    <h2>Evidence ID: <span id="pdf-initials"></span></h2>
                 </div>
-                <img src="logo.png" style="width:65px; height:auto;">
+                <img src="logo.png" style="width:70px; height:auto;">
             </div>
             
-            <div style="width:100%; border-radius:4px; overflow:hidden; border:1px solid #eee; margin-bottom:8px;">
-                <img id="map-img" crossorigin="anonymous" style="width:100%; display:block; min-height:140px;">
+            <div class="map-wrapper">
+                <img id="map-img" crossorigin="anonymous" src="">
             </div>
             
             <div class="data-grid">
@@ -95,89 +110,161 @@
                 <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
             </div>
 
-            <div id="facility-section" style="font-size:0.65rem; color:#555; border-top:1px solid #eee; padding-top:4px; display:none;">
+            <div id="facility-section">
                 <b>Nearest Verified Facility:</b> <span id="facility-display"></span>
             </div>
 
-            <div class="qr-area"><div id="qrcode"></div></div>
+            <div class="qr-area">
+                <div id="qrcode"></div>
+            </div>
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
     </div>
 </div>
 
+<div class="copyright">© Digestiv</div>
+
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
-    const specialties = ["Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", "Renal Medicine", "Maternity", "Geratology", "Haematology"];
+    const specialties = ["Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", "Renal Medicine", "Maternity", "Geratology", "Haematology", "Emergency Medicine"];
 
     function updatePlaceholders() {
         const initInput = document.getElementById('userInitials');
         const specInput = document.getElementById('wardDept');
-        if (!initInput.value) initInput.placeholder = String.fromCharCode(65+Math.random()*26, 65+Math.random()*26);
-        if (!specInput.value) specInput.placeholder = specialties[Math.floor(Math.random()*specialties.length)];
+        if (!initInput.value) {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
+        }
+        if (!specInput.value) {
+            specInput.placeholder = specialties[Math.floor(Math.random() * specialties.length)];
+        }
     }
-    setInterval(updatePlaceholders, 3000); updatePlaceholders();
+    setInterval(updatePlaceholders, 3000);
+    updatePlaceholders();
 
-    async function getNetworkTime() {
-        const apis = ['https://worldtimeapi.org/api/timezone/Europe/London', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'];
-        for (let url of apis) {
+    function toggleButton() {
+        document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
+    }
+
+    async function getStrictUKTime() {
+        const apiEndpoints = [
+            'https://worldtimeapi.org/api/timezone/Europe/London',
+            'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
+        ];
+        
+        // Try APIs
+        for (let url of apiEndpoints) {
             try {
-                const res = await fetch(url, { signal: AbortSignal.timeout(4000) });
+                const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
                 const data = await res.json();
-                return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+                if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
             } catch (e) {}
         }
-        // Web Header Fallback
+
+        // Try Web Header
         try {
             const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-            if (res.headers.get('date')) return { time: new Date(res.headers.get('date')).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+            const serverDate = res.headers.get('date');
+            if (serverDate) return { time: new Date(serverDate).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
         } catch (e) {}
         
-        // Final Fallback to Device Time (Flagged as Unverified)
+        // Fallback to Device Time (Flagged)
         return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     }
 
     async function captureData() {
         const status = document.getElementById('status');
         const capBtn = document.getElementById('capBtn');
-        capBtn.disabled = true;
-        status.innerText = "Syncing network time...";
-
-        const timeObj = await getNetworkTime();
         const initials = document.getElementById('userInitials').value.toUpperCase() || "N/A";
-        const dept = document.getElementById('wardDept').value || "Not Specified";
+        const deptName = document.getElementById('wardDept').value || "Not Specified";
+        
+        capBtn.disabled = true;
+        status.innerText = "Syncing verification data...";
 
+        const timeObj = await getStrictUKTime();
+        
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             
-            const timeDisplay = document.getElementById('ind-time');
-            timeDisplay.innerText = timeObj.time;
-            if (!timeObj.verified) {
-                timeDisplay.innerHTML += ' <span class="unverified-tag">(Unverified, device based)</span>';
+            const timeEl = document.getElementById('ind-time');
+            if (timeObj.verified) {
+                timeEl.innerText = timeObj.time;
+            } else {
+                timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified, device based)</span>`;
+            }
+
+            // Facility 200m logic
+            const facility = await getNearestFacility(lat, lon);
+            const facSection = document.getElementById('facility-section');
+            if (facility && facility.dist <= 0.2) {
+                document.getElementById('facility-display').innerText = `${facility.name} (${(facility.dist * 1000).toFixed(0)}m)`;
+                facSection.style.display = "block";
+            } else {
+                facSection.style.display = "none";
             }
 
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
-            document.getElementById('dept-display').innerText = dept;
+            document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
-            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7C${lat},${lon}&key=${API_KEY}`;
             
-            new QRCode(document.getElementById('qrcode'), { text: `REF:${sid}|USER:${initials}|TIME:${timeObj.time}|VERIFIED:${timeObj.verified}`, width: 140, height: 140 });
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+            
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = ""; 
+            new QRCode(qrDiv, { 
+                text: `REF:${sid}|USER:${initials}|TIME:${timeObj.time}|VERIFIED:${timeObj.verified}`, 
+                width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M 
+            });
 
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('dlBtn').style.display = 'flex';
-            status.innerText = timeObj.verified ? "Evidence Secured." : "Evidence Secured (Local Sync).";
+            status.innerText = "Evidence Secured.";
             capBtn.disabled = false;
+        }, (err) => { 
+            status.innerText = "GPS Error."; 
+            capBtn.disabled = false; 
         });
     }
 
+    async function getNearestFacility(lat, lon) {
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
+            const data = await res.json();
+            if (data.status === "OK" && data.results.length > 0) {
+                const f = data.results[0];
+                const d = calculateDistance(lat, lon, f.geometry.location.lat, f.geometry.location.lng);
+                return { name: f.name, dist: d };
+            }
+            return null;
+        } catch(e) { return null; }
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
     function downloadPDF() {
-        html2canvas(document.getElementById('export-container'), { useCORS: true, scale: 2.2 }).then(canvas => {
+        const status = document.getElementById('status');
+        const dlBtn = document.getElementById('dlBtn');
+        status.innerText = "Building PDF...";
+        dlBtn.disabled = true;
+
+        html2canvas(document.getElementById('export-container'), { 
+            useCORS: true, scale: 2.2 
+        }).then(canvas => {
             const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
             pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            status.innerText = "Downloaded.";
+            dlBtn.disabled = false;
         });
     }
 </script>
