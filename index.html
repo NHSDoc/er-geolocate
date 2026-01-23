@@ -17,6 +17,7 @@
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
         .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
+        
         .logo-header { text-align: center; margin-bottom: 12px; }
         .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
         .app-title { color: var(--nhs-blue); font-size: 1.4rem; font-weight: bold; margin: 0; }
@@ -36,7 +37,7 @@
         .probity-box input { transform: scale(1.2); margin-right: 8px; vertical-align: middle; }
 
         #result-area { display: none; width: 100%; }
-        #export-container { padding: 12px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
         
         .pdf-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--nhs-blue); padding-bottom: 5px; margin-bottom: 8px; }
         .pdf-header-text h1 { color: var(--nhs-blue); font-size: 1.1rem; margin: 0; }
@@ -92,7 +93,7 @@
                     <h1>ER GeoLocate</h1>
                     <h2>Evidence ID: <span id="pdf-initials"></span></h2>
                 </div>
-                <img src="logo.png" style="width:70px; height:auto;">
+                <img src="logo.png" style="width:65px; height:auto;">
             </div>
             
             <div class="map-wrapper">
@@ -104,4 +105,191 @@
                 <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
                 <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
-                <div
+                <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
+                <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
+            </div>
+
+            <div id="facility-section">
+                <b>Nearest Verified Facility:</b> <span id="facility-display"></span>
+            </div>
+
+            <div class="qr-area">
+                <div id="qrcode"></div>
+            </div>
+        </div>
+        <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
+    </div>
+</div>
+
+<div class="copyright">© Digestiv</div>
+
+<script>
+    const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
+
+    const specialties = ["Gastroenterology", "Cardiology", "Acute Medicine", "General Surgery", "Paediatrics", "Neurology", "Oncology", "Trauma & Orthopaedics", "Renal Medicine", "Maternity", "Geratology", "Haematology"];
+
+    function updatePlaceholders() {
+        const initInput = document.getElementById('userInitials');
+        const specInput = document.getElementById('wardDept');
+        if (!initInput.value) {
+            const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
+        }
+        if (!specInput.value) {
+            specInput.placeholder = specialties[Math.floor(Math.random() * specialties.length)];
+        }
+    }
+    setInterval(updatePlaceholders, 3000);
+    updatePlaceholders();
+
+    function sanitize(str) {
+        const temp = document.createElement('div');
+        temp.textContent = str;
+        return temp.innerHTML;
+    }
+
+    function toggleButton() {
+        document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
+    }
+
+    // TRIPLE REDUNDANCY TIME SYNC (Including Web Header Method)
+    async function getStrictUKTime() {
+        const timeEndpoints = [
+            { url: 'https://worldtimeapi.org/api/timezone/Europe/London', type: 'json' },
+            { url: 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', type: 'json' },
+            { url: 'https://worldclockapi.com/api/json/utc/now', type: 'json' }
+        ];
+
+        for (let endpoint of timeEndpoints) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(endpoint.url, { signal: controller.signal });
+                const data = await response.json();
+                clearTimeout(timeoutId);
+
+                let dateStr = data.datetime || data.dateTime || data.currentDateTime;
+                if (dateStr) {
+                    return new Date(dateStr).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+                }
+            } catch (e) {
+                console.warn(`Time source ${endpoint.url} failed.`);
+            }
+        }
+        return null; 
+    }
+
+    async function captureData() {
+        const status = document.getElementById('status');
+        const capBtn = document.getElementById('capBtn');
+        const initials = sanitize(document.getElementById('userInitials').value).toUpperCase() || "N/A";
+        const deptName = sanitize(document.getElementById('wardDept').value) || "Not Specified";
+        
+        capBtn.disabled = true;
+        status.innerText = "Connecting to UK Network Time...";
+
+        // Block until verified
+        const timeData = await getStrictUKTime();
+        if (!timeData) {
+            status.innerText = "Error: Network Time Sync Failed. Check connection.";
+            status.style.color = "var(--error-red)";
+            capBtn.disabled = false;
+            return; 
+        }
+
+        status.style.color = "inherit";
+        status.innerText = "Securing GPS position...";
+
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            const { latitude: lat, longitude: lon } = pos.coords;
+            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            
+            const facility = await getNearestFacility(lat, lon);
+            const facSection = document.getElementById('facility-section');
+            if (facility && facility.dist <= 0.2) {
+                document.getElementById('facility-display').innerText = `${facility.name} (${(facility.dist * 1000).toFixed(0)}m)`;
+                facSection.style.display = "block";
+            } else {
+                facSection.style.display = "none";
+            }
+
+            document.getElementById('display-initials').innerText = initials;
+            document.getElementById('pdf-initials').innerText = initials;
+            document.getElementById('dept-display').innerText = deptName;
+            document.getElementById('ind-time').innerText = timeData;
+            document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
+            document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            document.getElementById('session-display').innerText = sid;
+            
+            document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
+            
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = ""; 
+            new QRCode(qrDiv, { 
+                text: `REF:${sid}|USER:${initials}|UK:${timeData}|GPS:${lat},${lon}`, 
+                width: 140, height: 140, correctLevel: QRCode.CorrectLevel.M 
+            });
+
+            document.getElementById('result-area').style.display = 'block';
+            document.getElementById('dlBtn').style.display = 'flex';
+            status.innerText = "Evidence Secured.";
+            capBtn.disabled = false;
+        }, (err) => { 
+            status.innerText = "GPS Error."; 
+            capBtn.disabled = false; 
+        });
+    }
+
+    async function getNearestFacility(lat, lon) {
+        try {
+            const res = await fetch(`https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lon}&rankby=distance&type=hospital|health|doctor&key=${API_KEY}`);
+            const data = await res.json();
+            if (data.status === "OK" && data.results.length > 0) {
+                const f = data.results[0];
+                const d = calculateDistance(lat, lon, f.geometry.location.lat, f.geometry.location.lng);
+                return { name: f.name, dist: d };
+            }
+            return null;
+        } catch(e) { return null; }
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371; 
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function downloadPDF() {
+        const status = document.getElementById('status');
+        const dlBtn = document.getElementById('dlBtn');
+        status.innerText = "Generating PDF...";
+        dlBtn.disabled = true;
+
+        html2canvas(document.getElementById('export-container'), { 
+            useCORS: true, 
+            scale: 2.5,
+            logging: false 
+        }).then(canvas => {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a5');
+            const imgData = canvas.toDataURL('image/png');
+            pdf.addImage(imgData, 'PNG', 10, 8, 128, 0);
+            
+            pdf.setFontSize(8);
+            pdf.setTextColor(150);
+            pdf.text("\u00A9 Digestiv - Verified Evidence Report", 74, 205, { align: 'center' });
+            
+            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            status.innerText = "Saved.";
+            dlBtn.disabled = false;
+        }).catch(err => {
+            status.innerText = "Error.";
+            dlBtn.disabled = false;
+        });
+    }
+</script>
+</body>
+</html>
