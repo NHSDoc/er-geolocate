@@ -16,7 +16,7 @@
             --success-green: #007f3b; --warning-amber: #fff9e6; --error-red: #d5281b;
         }
         body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--nhs-grey); margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; color: var(--nhs-text); }
-        .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); position: relative; }
+        .container { width: 100%; max-width: 480px; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 6px solid var(--nhs-blue); }
         
         .logo-header { text-align: center; margin-bottom: 12px; }
         .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
@@ -30,41 +30,33 @@
         
         .employer-row { margin-bottom: 10px; }
         
-        .remember-box { display: flex; align-items: center; margin-top: 6px; cursor: pointer; font-size: 0.75rem; color: #555; user-select: none; }
-        .remember-box input { margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer; }
+        /* ALIGNMENT FIX: Flexbox with explicit vertical centering */
+        .remember-box {
+            display: flex;
+            align-items: center; 
+            margin-top: 6px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: #555;
+            user-select: none;
+        }
+        .remember-box input {
+            margin: 0 6px 0 0; /* Right margin only */
+            width: 16px;
+            height: 16px;
+            accent-color: var(--nhs-blue);
+            vertical-align: middle;
+            cursor: pointer;
+        }
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
 
-        /* Rainbow Progress Bar */
-        #progress-container { display: none; margin-bottom: 15px; }
-        .progress-track { width: 100%; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
-        .progress-bar { 
-            height: 100%; width: 0%; 
-            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
-            background-size: 200% 100%;
-            animation: rainbowMove 2s linear infinite;
-            transition: width 0.4s ease;
-        }
-        @keyframes rainbowMove { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
-        #progress-text { text-align: center; font-size: 0.75rem; color: #666; margin-top: 5px; font-weight: bold; }
-
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
-        .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; }
-
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
+        .probity-box input { margin-top: 2px; transform: scale(1.1); }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -82,22 +74,11 @@
         
         .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
         .unverified-text { color: var(--error-red); font-weight: bold; }
-        .risk-tag { color: var(--error-red); font-weight: bold; margin-left: 4px; font-size: 0.6rem; border: 1px solid var(--error-red); padding: 0 3px; border-radius: 3px; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
         #qrcode { display: inline-block; padding: 4px; border: 1px solid #eee; background: #fff; }
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
-        
-        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
-        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-
-        /* Modal Styles */
-        #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
-        .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
     </style>
 </head>
@@ -129,30 +110,16 @@
         </label>
     </div>
 
-    <button id="capBtn" class="btn btn-capture" onclick="startCapture()" disabled>📍 Verify & Capture Location</button>
-    
-    <div id="progress-container">
-        <div class="progress-track">
-            <div id="rainbow-bar" class="progress-bar"></div>
-        </div>
-        <div id="progress-text">Connecting...</div>
-    </div>
+    <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
     
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
-            <span><b>Probity:</b> I certify the accurate recording of my clinical hours outside my rostered schedule. I recognise my obligations under GMC Good Clinical Practice in doing so.</span>
+            <span><b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.</span>
         </label>
     </div>
 
     <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div>
-
-    <details id="guide-details">
-        <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
-        <div class="guide-content">
-            <img src="guide.jpg" alt="How to use ER GeoLocate" class="guide-img">
-        </div>
-    </details>
 
     <div id="result-area">
         <div id="export-container">
@@ -175,7 +142,7 @@
                 <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
                 
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
-                <div class="data-item"><b>Device ID</b><span id="device-display"></span></div>
+                <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
                 
                 <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
                 <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
@@ -191,26 +158,6 @@
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
     </div>
-
-    <div class="footer-links">
-        <a href="#" onclick="openInstallHelp(); return false;">📲 Install App on Phone</a> | <span style="color:#999">© Digestiv</span>
-    </div>
-</div>
-
-<div id="install-modal">
-    <div class="modal-content">
-        <h3>Install App on Phone</h3>
-        <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your home screen:</p>
-        <div style="margin-bottom: 15px;">
-            <b style="color:#000;">🤖 Android (Chrome)</b><br>
-            <span style="font-size:0.85rem; color:#666;">Tap the <b>three dots (⋮)</b> top right ➝ Select <b>"Add to Home screen"</b>.</span>
-        </div>
-        <div>
-            <b style="color:#000;">🍎 iOS (Safari)</b><br>
-            <span style="font-size:0.85rem; color:#666;">Tap the <b>Share icon (⏍)</b> bottom center ➝ Scroll down and select <b>"Add to Home Screen"</b>.</span>
-        </div>
-        <button class="modal-close" onclick="closeInstallHelp()">Close</button>
-    </div>
 </div>
 
 <div class="copyright">© Digestiv</div>
@@ -218,8 +165,9 @@
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
-    // FULL UK TRUST LIST
+    // FULL UK TRUST LIST (England, Scotland, Wales, NI)
     const trusts = [
+        // LONDON
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
         "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
         "Guy's and St Thomas' NHS Foundation Trust", "Hillingdon Hospitals NHS Foundation Trust", "Homerton Healthcare NHS Foundation Trust",
@@ -229,12 +177,14 @@
         "Royal Brompton and Harefield NHS Foundation Trust", "Royal Free London NHS Foundation Trust", "Royal National Orthopaedic Hospital NHS Trust",
         "St George's University Hospitals NHS Foundation Trust", "The Hillingdon Hospitals NHS Foundation Trust", "The Royal Marsden NHS Foundation Trust",
         "University College London Hospitals NHS Foundation Trust", "Whittington Health NHS Trust",
+        // EAST OF ENGLAND
         "Bedfordshire Hospitals NHS Foundation Trust", "Cambridge University Hospitals NHS Foundation Trust", "Cambridgeshire and Peterborough NHS Foundation Trust",
         "East and North Hertfordshire NHS Trust", "East of England Ambulance Service NHS Trust", "East Suffolk and North Essex NHS Foundation Trust",
         "Essex Partnership University NHS Foundation Trust", "Hertfordshire Partnership University NHS Foundation Trust", "James Paget University Hospitals NHS Foundation Trust",
         "Mid and South Essex NHS Foundation Trust", "Norfolk and Norwich University Hospitals NHS Foundation Trust", "Norfolk and Suffolk NHS Foundation Trust",
         "North West Anglia NHS Foundation Trust", "Queen Elizabeth Hospital King's Lynn NHS Foundation Trust", "Royal Papworth Hospital NHS Foundation Trust",
         "West Hertfordshire Teaching Hospitals NHS Trust", "West Suffolk NHS Foundation Trust",
+        // MIDLANDS
         "Birmingham and Solihull Mental Health NHS Foundation Trust", "Birmingham Community Healthcare NHS Foundation Trust", "Birmingham Women's and Children's NHS Foundation Trust",
         "Chesterfield Royal Hospital NHS Foundation Trust", "Coventry and Warwickshire Partnership NHS Trust", "Derbyshire Healthcare NHS Foundation Trust",
         "East Midlands Ambulance Service NHS Trust", "George Eliot Hospital NHS Trust", "Herefordshire and Worcestershire Health and Care NHS Trust",
@@ -247,6 +197,7 @@
         "University Hospitals Birmingham NHS Foundation Trust", "University Hospitals Coventry and Warwickshire NHS Trust", "University Hospitals of Derby and Burton NHS Foundation Trust",
         "University Hospitals of Leicester NHS Trust", "University Hospitals of North Midlands NHS Trust", "Walsall Healthcare NHS Trust",
         "West Midlands Ambulance Service University NHS Foundation Trust", "Worcestershire Acute Hospitals NHS Trust", "Wye Valley NHS Trust",
+        // NORTH EAST & YORKSHIRE
         "Barnsley Hospital NHS Foundation Trust", "Bradford District Care NHS Foundation Trust", "Bradford Teaching Hospitals NHS Foundation Trust",
         "Calderdale and Huddersfield NHS Foundation Trust", "County Durham and Darlington NHS Foundation Trust", "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
         "Doncaster and Bassetlaw Teaching Hospitals NHS Foundation Trust", "Gateshead Health NHS Foundation Trust", "Harrogate and District NHS Foundation Trust",
@@ -257,6 +208,7 @@
         "Sheffield Teaching Hospitals NHS Foundation Trust", "South Tees Hospitals NHS Foundation Trust", "South Tyneside and Sunderland NHS Foundation Trust",
         "South West Yorkshire Partnership NHS Foundation Trust", "Tees, Esk and Wear Valleys NHS Foundation Trust", "The Newcastle Upon Tyne Hospitals NHS Foundation Trust",
         "The Rotherham NHS Foundation Trust", "York and Scarborough Teaching Hospitals NHS Foundation Trust", "Yorkshire Ambulance Service NHS Trust",
+        // NORTH WEST
         "Alder Hey Children's NHS Foundation Trust", "Blackpool Teaching Hospitals NHS Foundation Trust", "Bolton NHS Foundation Trust",
         "Bridgewater Community Healthcare NHS Foundation Trust", "Cheshire and Wirral Partnership NHS Foundation Trust", "Countess of Chester Hospital NHS Foundation Trust",
         "East Cheshire NHS Trust", "East Lancashire Hospitals NHS Trust", "Greater Manchester Mental Health NHS Foundation Trust",
@@ -268,6 +220,7 @@
         "The Clatterbridge Cancer Centre NHS Foundation Trust", "The Walton Centre NHS Foundation Trust", "University Hospitals of Morecambe Bay NHS Foundation Trust",
         "Warrington and Halton Teaching Hospitals NHS Foundation Trust", "Wirral Community Health and Care NHS Foundation Trust", "Wirral University Teaching Hospital NHS Foundation Trust",
         "Wrightington, Wigan and Leigh NHS Foundation Trust",
+        // SOUTH EAST
         "Ashford and St Peter's Hospitals NHS Foundation Trust", "Berkshire Healthcare NHS Foundation Trust", "Buckinghamshire Healthcare NHS Trust",
         "Dartford and Gravesham NHS Trust", "East Kent Hospitals University NHS Foundation Trust", "East Sussex Healthcare NHS Trust",
         "Frimley Health NHS Foundation Trust", "Hampshire Hospitals NHS Foundation Trust", "Isle of Wight NHS Trust",
@@ -278,6 +231,7 @@
         "South East Coast Ambulance Service NHS Foundation Trust", "Southern Health NHS Foundation Trust", "Surrey and Borders Partnership NHS Foundation Trust",
         "Sussex Community NHS Foundation Trust", "Sussex Partnership NHS Foundation Trust", "University Hospital Southampton NHS Foundation Trust",
         "Western Sussex Hospitals NHS Foundation Trust",
+        // SOUTH WEST
         "Avon and Wiltshire Mental Health Partnership NHS Trust", "Cornwall Partnership NHS Foundation Trust", "Devon Partnership NHS Trust",
         "Dorset County Hospital NHS Foundation Trust", "Dorset HealthCare University NHS Foundation Trust", "Gloucestershire Health and Care NHS Foundation Trust",
         "Gloucestershire Hospitals NHS Foundation Trust", "Great Western Hospitals NHS Foundation Trust", "North Bristol NHS Trust",
@@ -286,16 +240,20 @@
         "South Western Ambulance Service NHS Foundation Trust", "Torbay and South Devon NHS Foundation Trust", "University Hospitals Bristol and Weston NHS Foundation Trust",
         "University Hospitals Dorset NHS Foundation Trust", "University Hospitals Plymouth NHS Trust", "Wiltshire Health and Care",
         "Yeovil District Hospital NHS Foundation Trust",
+        // SCOTLAND (Health Boards)
         "NHS Ayrshire and Arran", "NHS Borders", "NHS Dumfries and Galloway", "NHS Fife", "NHS Forth Valley", "NHS Grampian",
         "NHS Greater Glasgow and Clyde", "NHS Highland", "NHS Lanarkshire", "NHS Lothian", "NHS Orkney", "NHS Shetland",
         "NHS Tayside", "NHS Western Isles", "Scottish Ambulance Service", "The State Hospital", "Golden Jubilee National Hospital",
+        // WALES (Health Boards)
         "Aneurin Bevan University Health Board", "Betsi Cadwaladr University Health Board", "Cardiff and Vale University Health Board",
         "Cwm Taf Morgannwg University Health Board", "Hywel Dda University Health Board", "Powys Teaching Health Board",
         "Swansea Bay University Health Board", "Velindre University NHS Trust", "Welsh Ambulance Services NHS Trust",
+        // NORTHERN IRELAND (HSC Trusts)
         "Belfast Health and Social Care Trust", "Northern Health and Social Care Trust", "South Eastern Health and Social Care Trust",
         "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
     ];
 
+    // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
     trusts.sort().forEach(t => {
         let option = document.createElement('option');
@@ -317,12 +275,11 @@
     function updatePlaceholders() {
         const initInput = document.getElementById('userInitials');
         const specInput = document.getElementById('wardDept');
-        // Only cycle if box is not focused or empty
-        if (document.activeElement !== initInput && !initInput.value) {
+        if (!initInput.value) {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
         }
-        if (document.activeElement !== specInput && !specInput.value) {
+        if (!specInput.value) {
             specInput.placeholder = specialties[Math.floor(Math.random() * specialties.length)];
         }
     }
@@ -333,101 +290,43 @@
         document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
     }
 
+    // Helper to abbreviate long Trust names for the QR code
     function abbreviateName(str) {
         if (!str) return "NA";
         return str.match(/\b(\w)/g).join('').toUpperCase();
     }
 
-    // Modal Logic
-    function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
-    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
-
-    // Device Type Detection
-    function getDeviceType() {
-        const ua = navigator.userAgent;
-        if (/android/i.test(ua)) return "Android Device";
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "iOS Device";
-        if (/Mac/.test(ua)) return "Mac Desktop";
-        if (/Win/.test(ua)) return "Windows Desktop";
-        return "Unknown Device";
-    }
-
-    // Spoofing Detection Logic
-    function detectSpoofingRisk(coords) {
-        let risk = { level: "LOW", reasons: [] };
-        if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
-        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) { risk.level = "MEDIUM"; risk.reasons.push("StaticAcc"); }
-        if (coords.altitude === null && coords.speed === null && coords.heading === null) { risk.level = "HIGH"; risk.reasons.push("IncompleteData"); }
-        return risk;
-    }
-
-    // Progress Bar Helper
-    const updateProgress = (pct, text) => {
-        document.getElementById('rainbow-bar').style.width = pct + '%';
-        document.getElementById('progress-text').innerText = text;
-    };
-
-    // --- 4-STEP VERIFICATION LOGIC ---
-    async function startCapture() {
-        document.getElementById('capBtn').disabled = true;
-        document.getElementById('guide-details').style.display = 'none'; // Hide guide
-        
-        document.getElementById('progress-container').style.display = 'block';
-        document.getElementById('status').innerText = "";
-        
-        let verifiedTime = null;
-
-        // Step 1: Infrastructure Check (Cloudflare Trace)
-        updateProgress(10, "Verifying Global Infrastructure...");
+    async function getStrictUKTime() {
+        // Quad-Redundancy Logic
+        const apiEndpoints = [
+            'https://worldtimeapi.org/api/timezone/Europe/London',
+            'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
+        ];
+        for (let url of apiEndpoints) {
+            try {
+                const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
+                const data = await res.json();
+                if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+            } catch (e) {}
+        }
         try {
-            const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
-            const text = await res.text();
-            const tsMatch = text.match(/ts=([0-9\.]+)/);
-            if (tsMatch && tsMatch[1]) {
-                verifiedTime = new Date(parseFloat(tsMatch[1]) * 1000).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            }
-        } catch(e) { console.log("Cloudflare Trace failed"); }
-
-        // Step 2: WorldTimeAPI (Atomic Clock 1)
-        if (!verifiedTime) {
-            updateProgress(40, "Checking Atomic Server 1...");
-            try {
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
-                const data = await res.json();
-                if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { console.log("WorldTimeAPI failed"); }
-        }
-
-        // Step 3: TimeAPI (Atomic Clock 2)
-        if (!verifiedTime) {
-            updateProgress(70, "Checking Atomic Server 2...");
-            try {
-                const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', { signal: AbortSignal.timeout(2000) });
-                const data = await res.json();
-                if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { console.log("TimeAPI failed"); }
-        }
-
-        // Step 4: TimeZoneDB (Backup)
-        if (!verifiedTime) {
-            updateProgress(90, "Checking Backup Database...");
-            try {
-                const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(2000) });
-                const data = await res.json();
-                if (data.formatted) verifiedTime = new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { console.log("TimeZoneDB failed"); }
-        }
-
-        // UPDATE TEXT TO SHOW GPS IS NEXT
-        updateProgress(100, "Acquiring Secure GPS...");
+            const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
+            const data = await res.json();
+            if (data.formatted) return { time: new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+        } catch(e) {}
+        try {
+            const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
+            const serverDate = res.headers.get('date');
+            if (serverDate) return { time: new Date(serverDate).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+        } catch (e) {}
         
-        const isVerified = !!verifiedTime;
-        const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
-
-        finishCapture(finalTime, isVerified);
+        // Fallback
+        return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     }
 
-    function finishCapture(timeString, verified) {
+    async function captureData() {
+        const status = document.getElementById('status');
+        const capBtn = document.getElementById('capBtn');
         const initials = document.getElementById('userInitials').value.toUpperCase() || "N/A";
         const deptName = document.getElementById('wardDept').value || "Not Specified";
         const employer = document.getElementById('leadEmployer').value || "Not Specified";
@@ -438,25 +337,25 @@
         } else {
             localStorage.removeItem('er_employer');
         }
+        
+        capBtn.disabled = true;
+        status.innerText = "Syncing verification data...";
 
-        // --- NEW GEOLOCATION HANDLER ---
-        const handleSuccess = async (pos) => {
-            const spoofData = detectSpoofingRisk(pos.coords);
-            const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
-            const deviceName = getDeviceType();
-
+        const timeObj = await getStrictUKTime();
+        
+        navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
             
             const timeEl = document.getElementById('ind-time');
-            if (verified) {
-                timeEl.innerText = timeString;
+            if (timeObj.verified) {
+                timeEl.innerText = timeObj.time;
             } else {
-                timeEl.innerHTML = `${timeString} <span class="unverified-text">(Unverified)</span>`;
+                timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified, device based)</span>`;
             }
 
-            // Facility Logic
+            // Facility 200m logic
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -471,51 +370,25 @@
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
-            document.getElementById('device-display').innerText = deviceName; 
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-            
-            if(spoofData.level !== "LOW") {
-                document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
-            }
-
             document.getElementById('session-display').innerText = sid;
+            
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|RISK:${spoofFlag}`, 
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             });
 
-            document.getElementById('progress-container').style.display = 'none';
             document.getElementById('result-area').style.display = 'block';
             document.getElementById('dlBtn').style.display = 'flex';
-            document.getElementById('status').innerText = "Evidence Secured.";
-            document.getElementById('capBtn').disabled = false;
-        };
-
-        const handleError = (err) => {
-            // If high accuracy fails, try low accuracy immediately
-            if (err.code === 3 || err.code === 1) { // Timeout or Permission Denied
-                console.log("High accuracy failed, attempting fallback...");
-                navigator.geolocation.getCurrentPosition(handleSuccess, (finalErr) => {
-                    document.getElementById('progress-container').style.display = 'none';
-                    document.getElementById('status').innerText = "GPS Error: Check Location Services."; 
-                    document.getElementById('capBtn').disabled = false;
-                }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
-            } else {
-                document.getElementById('progress-container').style.display = 'none';
-                document.getElementById('status').innerText = "GPS Error: " + err.message; 
-                document.getElementById('capBtn').disabled = false;
-            }
-        };
-
-        // REQUEST 1: High Accuracy with 10s Timeout
-        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
-            enableHighAccuracy: true, 
-            timeout: 10000, 
-            maximumAge: 0 
+            status.innerText = "Evidence Secured.";
+            capBtn.disabled = false;
+        }, (err) => { 
+            status.innerText = "GPS Error."; 
+            capBtn.disabled = false; 
         });
     }
 
