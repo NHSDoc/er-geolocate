@@ -33,22 +33,10 @@
         .remember-box { display: flex; align-items: center; margin-top: 6px; cursor: pointer; font-size: 0.75rem; color: #555; user-select: none; }
         .remember-box input { margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer; }
 
-        /* Button Transition */
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
-
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
 
         /* Rainbow Progress Bar */
         #progress-container { display: none; margin-bottom: 15px; }
@@ -66,6 +54,17 @@
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; }
+
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -371,8 +370,7 @@
     // --- 4-STEP VERIFICATION LOGIC ---
     async function startCapture() {
         document.getElementById('capBtn').disabled = true;
-        // Hide Guide
-        document.getElementById('guide-details').style.display = 'none';
+        document.getElementById('guide-details').style.display = 'none'; // Hide guide
         
         document.getElementById('progress-container').style.display = 'block';
         document.getElementById('status').innerText = "";
@@ -384,7 +382,6 @@
         try {
             const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
             const text = await res.text();
-            // Parse Cloudflare output for 'ts=' (timestamp)
             const tsMatch = text.match(/ts=([0-9\.]+)/);
             if (tsMatch && tsMatch[1]) {
                 verifiedTime = new Date(parseFloat(tsMatch[1]) * 1000).toLocaleString('en-GB', {timeZone: 'Europe/London'});
@@ -421,7 +418,8 @@
             } catch(e) { console.log("TimeZoneDB failed"); }
         }
 
-        updateProgress(100, "Verification Complete.");
+        // UPDATE TEXT TO SHOW GPS IS NEXT
+        updateProgress(100, "Acquiring Secure GPS...");
         
         const isVerified = !!verifiedTime;
         const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
@@ -441,7 +439,8 @@
             localStorage.removeItem('er_employer');
         }
 
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        // --- NEW GEOLOCATION HANDLER ---
+        const handleSuccess = async (pos) => {
             const spoofData = detectSpoofingRisk(pos.coords);
             const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
             const deviceName = getDeviceType();
@@ -457,7 +456,7 @@
                 timeEl.innerHTML = `${timeString} <span class="unverified-text">(Unverified)</span>`;
             }
 
-            // Facility 200m logic
+            // Facility Logic
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -480,7 +479,6 @@
             }
 
             document.getElementById('session-display').innerText = sid;
-            
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
             const qrDiv = document.getElementById('qrcode');
@@ -495,11 +493,30 @@
             document.getElementById('dlBtn').style.display = 'flex';
             document.getElementById('status').innerText = "Evidence Secured.";
             document.getElementById('capBtn').disabled = false;
-        }, (err) => { 
-            document.getElementById('progress-container').style.display = 'none';
-            document.getElementById('status').innerText = "GPS Error. Check settings."; 
-            document.getElementById('capBtn').disabled = false; 
-        }, { enableHighAccuracy: true });
+        };
+
+        const handleError = (err) => {
+            // If high accuracy fails, try low accuracy immediately
+            if (err.code === 3 || err.code === 1) { // Timeout or Permission Denied
+                console.log("High accuracy failed, attempting fallback...");
+                navigator.geolocation.getCurrentPosition(handleSuccess, (finalErr) => {
+                    document.getElementById('progress-container').style.display = 'none';
+                    document.getElementById('status').innerText = "GPS Error: Check Location Services."; 
+                    document.getElementById('capBtn').disabled = false;
+                }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+            } else {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('status').innerText = "GPS Error: " + err.message; 
+                document.getElementById('capBtn').disabled = false;
+            }
+        };
+
+        // REQUEST 1: High Accuracy with 10s Timeout
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+            enableHighAccuracy: true, 
+            timeout: 10000, 
+            maximumAge: 0 
+        });
     }
 
     async function getNearestFacility(lat, lon) {
