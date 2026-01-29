@@ -20,17 +20,6 @@
         
         .logo-header { text-align: center; margin-bottom: 12px; }
         .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
-
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
         
         .input-row { display: flex; gap: 8px; margin-bottom: 10px; }
         .input-group { flex: 1; }
@@ -44,10 +33,22 @@
         .remember-box { display: flex; align-items: center; margin-top: 6px; cursor: pointer; font-size: 0.75rem; color: #555; user-select: none; }
         .remember-box input { margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer; }
 
+        /* Button Transition */
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; }
+
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
 
         /* Rainbow Progress Bar */
         #progress-container { display: none; margin-bottom: 15px; }
@@ -91,12 +92,14 @@
         
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
         .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-        
-        /* Modal Styles for Install Help */
+
+        /* Modal Styles */
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
+        .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -199,17 +202,14 @@
     <div class="modal-content">
         <h3>Install App on Phone</h3>
         <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your home screen:</p>
-        
         <div style="margin-bottom: 15px;">
             <b style="color:#000;">🤖 Android (Chrome)</b><br>
-            <span style="font-size:0.85rem; color:#666;">Tap the <b>three dots (⋮)</b> top right ➝ Select <b>"Add to Home screen"</b> or "Install App".</span>
+            <span style="font-size:0.85rem; color:#666;">Tap the <b>three dots (⋮)</b> top right ➝ Select <b>"Add to Home screen"</b>.</span>
         </div>
-
         <div>
             <b style="color:#000;">🍎 iOS (Safari)</b><br>
             <span style="font-size:0.85rem; color:#666;">Tap the <b>Share icon (⏍)</b> bottom center ➝ Scroll down and select <b>"Add to Home Screen"</b>.</span>
         </div>
-
         <button class="modal-close" onclick="closeInstallHelp()">Close</button>
     </div>
 </div>
@@ -339,11 +339,11 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     }
 
-    // RESTORED: Modal Logic
+    // Modal Logic
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
     function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
 
-    // RESTORED: Device Type Detection
+    // Device Type Detection
     function getDeviceType() {
         const ua = navigator.userAgent;
         if (/android/i.test(ua)) return "Android Device";
@@ -353,7 +353,7 @@
         return "Unknown Device";
     }
 
-    // RESTORED: Spoofing Detection Logic
+    // Spoofing Detection Logic
     function detectSpoofingRisk(coords) {
         let risk = { level: "LOW", reasons: [] };
         if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
@@ -368,10 +368,10 @@
         document.getElementById('progress-text').innerText = text;
     };
 
-    // Main Verification Sequence
+    // --- 4-STEP VERIFICATION LOGIC ---
     async function startCapture() {
         document.getElementById('capBtn').disabled = true;
-        // HIDE THE GUIDE ON CLICK
+        // Hide Guide
         document.getElementById('guide-details').style.display = 'none';
         
         document.getElementById('progress-container').style.display = 'block';
@@ -379,36 +379,46 @@
         
         let verifiedTime = null;
 
-        // Step 1: Google UK Check (Simulation)
-        updateProgress(10, "Verifying with Google.co.uk...");
-        await new Promise(r => setTimeout(r, 800)); 
-
-        // Step 2: WorldTimeAPI
-        updateProgress(40, "Checking Atomic Server (WorldTime)...");
+        // Step 1: Infrastructure Check (Cloudflare Trace)
+        updateProgress(10, "Verifying Global Infrastructure...");
         try {
-            const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
-            const data = await res.json();
-            if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-        } catch(e) {}
+            const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
+            const text = await res.text();
+            // Parse Cloudflare output for 'ts=' (timestamp)
+            const tsMatch = text.match(/ts=([0-9\.]+)/);
+            if (tsMatch && tsMatch[1]) {
+                verifiedTime = new Date(parseFloat(tsMatch[1]) * 1000).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            }
+        } catch(e) { console.log("Cloudflare Trace failed"); }
 
-        // Step 3: TimeAPI (Failover)
+        // Step 2: WorldTimeAPI (Atomic Clock 1)
         if (!verifiedTime) {
-            updateProgress(60, "Checking Secondary Server (TimeAPI)...");
+            updateProgress(40, "Checking Atomic Server 1...");
+            try {
+                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
+                const data = await res.json();
+                if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            } catch(e) { console.log("WorldTimeAPI failed"); }
+        }
+
+        // Step 3: TimeAPI (Atomic Clock 2)
+        if (!verifiedTime) {
+            updateProgress(70, "Checking Atomic Server 2...");
             try {
                 const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
                 if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) {}
+            } catch(e) { console.log("TimeAPI failed"); }
         }
 
-        // Step 4: TimeZoneDB (Failover)
+        // Step 4: TimeZoneDB (Backup)
         if (!verifiedTime) {
-            updateProgress(80, "Checking Backup Database...");
+            updateProgress(90, "Checking Backup Database...");
             try {
                 const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
                 if (data.formatted) verifiedTime = new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) {}
+            } catch(e) { console.log("TimeZoneDB failed"); }
         }
 
         updateProgress(100, "Verification Complete.");
@@ -432,7 +442,6 @@
         }
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            // Run Detection Checks
             const spoofData = detectSpoofingRisk(pos.coords);
             const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
             const deviceName = getDeviceType();
@@ -458,16 +467,14 @@
                 facSection.style.display = "none";
             }
 
-            // Fill Data Grid
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
-            document.getElementById('device-display').innerText = deviceName; // Show Device
+            document.getElementById('device-display').innerText = deviceName; 
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             
-            // Show Risk Tag if needed
             if(spoofData.level !== "LOW") {
                 document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
             }
@@ -479,7 +486,6 @@
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                // Updated QR string with Risk and Device
                 text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|RISK:${spoofFlag}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             });
