@@ -31,21 +31,12 @@
         
         .employer-row { margin-bottom: 10px; }
         
-        /* Flexbox Alignment for Remember Me */
         .remember-box {
-            display: flex;
-            align-items: center; 
-            margin-top: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            color: #555;
-            user-select: none;
+            display: flex; align-items: center; margin-top: 6px; cursor: pointer;
+            font-size: 0.75rem; color: #555; user-select: none;
         }
         .remember-box input {
-            margin: 0 6px 0 0; 
-            width: 16px; height: 16px;
-            accent-color: var(--nhs-blue);
-            cursor: pointer;
+            margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); cursor: pointer;
         }
 
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
@@ -55,7 +46,7 @@
 
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
-        .probity-box input { margin-top: 2px; transform: scale(1.1); }
+        .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -80,11 +71,10 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
-        /* Footer & Help Modal */
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
         .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
         
-        #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
@@ -123,7 +113,7 @@
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
-            <span><b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.</span>
+            <span><b>Probity:</b> I certify the accurate recording of my clinical hours outside my rostered schedule. I recognise my obligations under GMC Good Clinical Practice in doing so.</span>
         </label>
     </div>
 
@@ -168,14 +158,14 @@
     </div>
 
     <div class="footer-links">
-        <a href="#" onclick="openInstallHelp()">📲 Install App</a> | <span style="color:#999">© Digestiv</span>
+        <a href="#" onclick="openInstallHelp(); return false;">📲 Install App on Phone</a> | <span style="color:#999">© Digestiv</span>
     </div>
 </div>
 
 <div id="install-modal">
     <div class="modal-content">
-        <h3>Install App to Home Screen</h3>
-        <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your phone:</p>
+        <h3>Install App on Phone</h3>
+        <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your home screen:</p>
         
         <div style="margin-bottom: 15px;">
             <b style="color:#000;">🤖 Android (Chrome)</b><br>
@@ -192,19 +182,25 @@
 </div>
 
 <script>
-    // --- 1. CONFIGURATION: SUPABASE & API KEYS ---
+    // --- 1. MODAL LOGIC (Global) ---
+    function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
+    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
+
+    // --- 2. CONFIGURATION ---
     const CONFIG = {
         supabaseUrl: 'YOUR_SUPABASE_URL_HERE',
         supabaseKey: 'YOUR_SUPABASE_ANON_KEY_HERE',
-        googleMapsKey: 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8' // Use your key here
+        googleMapsKey: 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8' 
     };
 
     let supabase = null;
-    if (CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL_HERE') {
-        supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
-    }
+    try {
+        if (CONFIG.supabaseUrl !== 'YOUR_SUPABASE_URL_HERE' && window.supabase) {
+            supabase = window.supabase.createClient(CONFIG.supabaseUrl, CONFIG.supabaseKey);
+        }
+    } catch(e) { console.log("Supabase not configured"); }
 
-    // --- 2. FULL NHS TRUST LIST ---
+    // --- 3. DATA & LISTS ---
     const trusts = [
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
         "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
@@ -279,7 +275,6 @@
         "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
     ];
 
-    // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
     trusts.sort().forEach(t => {
         let option = document.createElement('option');
@@ -287,7 +282,6 @@
         datalist.appendChild(option);
     });
 
-    // --- 3. INIT & UTILS ---
     window.onload = function() {
         const savedEmp = localStorage.getItem('er_employer');
         if (savedEmp) {
@@ -313,7 +307,6 @@
     function toggleButton() { document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked; }
     function abbreviateName(str) { return str ? str.match(/\b(\w)/g).join('').toUpperCase() : "NA"; }
     
-    // --- 4. DEVICE IDENTIFICATION ---
     function getDeviceType() {
         const ua = navigator.userAgent;
         if (/android/i.test(ua)) return "Android Device";
@@ -323,28 +316,15 @@
         return "Unknown Device";
     }
 
-    // --- 5. SPOOFING DETECTION ---
     function detectSpoofingRisk(coords) {
         let risk = { level: "LOW", reasons: [] };
-        // Check 1: Missing Altitude (Common in simple spoofers)
-        if (coords.altitude === null) {
-            risk.level = "MEDIUM";
-            risk.reasons.push("NoAlt");
-        }
-        // Check 2: Perfect Accuracy (Real GPS is rarely exactly 5m or 10m)
-        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) {
-            risk.level = "MEDIUM";
-            risk.reasons.push("StaticAcc");
-        }
-        // Check 3: Incomplete Telemetry
-        if (coords.altitude === null && coords.speed === null && coords.heading === null) {
-            risk.level = "HIGH";
-            risk.reasons.push("IncompleteData");
-        }
+        if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
+        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) { risk.level = "MEDIUM"; risk.reasons.push("StaticAcc"); }
+        if (coords.altitude === null && coords.speed === null && coords.heading === null) { risk.level = "HIGH"; risk.reasons.push("IncompleteData"); }
         return risk;
     }
 
-    // --- 6. CORE LOGIC ---
+    // --- 4. TIME SYNC (Fixed) ---
     async function getStrictUKTime() {
         const apiEndpoints = ['https://worldtimeapi.org/api/timezone/Europe/London', 'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'];
         for (let url of apiEndpoints) {
@@ -354,13 +334,11 @@
                 if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
             } catch (e) {}
         }
-        try {
-            const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-            if (res.headers.get('date')) return { time: new Date(res.headers.get('date')).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
-        } catch (e) {}
+        // Fallback to device time (removed Google HEAD as it causes CORS blocks in many browsers)
         return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     }
 
+    // --- 5. MAIN CAPTURE LOGIC ---
     async function captureData() {
         const status = document.getElementById('status');
         const capBtn = document.getElementById('capBtn');
@@ -377,11 +355,9 @@
         const timeObj = await getStrictUKTime();
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            // Anti-Spoof Check
             const spoofData = detectSpoofingRisk(pos.coords);
             const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
             const deviceName = getDeviceType();
-
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
@@ -390,7 +366,6 @@
             if (timeObj.verified) timeEl.innerText = timeObj.time;
             else timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified)</span>`;
 
-            // Facility Logic
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -400,21 +375,20 @@
                 facSection.style.display = "none";
             }
 
-            // Fill Data Grid
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('device-display').innerText = deviceName;
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            
             if(spoofData.level !== "LOW") {
                 document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
             }
+
             document.getElementById('session-display').innerText = sid;
-            
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${CONFIG.googleMapsKey}`;
             
-            // Generate QR
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
@@ -422,7 +396,6 @@
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             });
 
-            // Cloud Upload (Optional)
             if (supabase) {
                 supabase.from('reports').insert({
                     user_initials: initials, specialty: deptName, employer: employer,
@@ -437,7 +410,7 @@
             status.innerText = "Evidence Secured.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "GPS Error. Enable Location Services."; 
+            status.innerText = "GPS Error. Check Location Settings."; 
             capBtn.disabled = false; 
         }, { enableHighAccuracy: true });
     }
@@ -474,10 +447,6 @@
             status.innerText = "Downloaded."; dlBtn.disabled = false;
         });
     }
-
-    // --- 7. MODAL LOGIC ---
-    function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
-    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
 </script>
 </body>
 </html>
