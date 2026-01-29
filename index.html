@@ -22,7 +22,7 @@
         .app-logo { width: 100px; height: auto; margin-bottom: 2px; }
 
         /* Guide Styles */
-        details { margin-bottom: 15px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { 
             background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
             font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
@@ -41,16 +41,9 @@
         
         .employer-row { margin-bottom: 10px; }
         
-        /* Flexbox Alignment for Remember Me */
-        .remember-box {
-            display: flex; align-items: center; margin-top: 6px; cursor: pointer;
-            font-size: 0.75rem; color: #555; user-select: none;
-        }
-        .remember-box input {
-            margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
-        }
+        .remember-box { display: flex; align-items: center; margin-top: 6px; cursor: pointer; font-size: 0.75rem; color: #555; user-select: none; }
+        .remember-box input { margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer; }
 
-        /* Verify Button */
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.3s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
@@ -66,10 +59,7 @@
             animation: rainbowMove 2s linear infinite;
             transition: width 0.4s ease;
         }
-        @keyframes rainbowMove { 
-            0% { background-position: 100% 0; } 
-            100% { background-position: 0 0; } 
-        }
+        @keyframes rainbowMove { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
         #progress-text { text-align: center; font-size: 0.75rem; color: #666; margin-top: 5px; font-weight: bold; }
 
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
@@ -92,12 +82,21 @@
         
         .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
         .unverified-text { color: var(--error-red); font-weight: bold; }
+        .risk-tag { color: var(--error-red); font-weight: bold; margin-left: 4px; font-size: 0.6rem; border: 1px solid var(--error-red); padding: 0 3px; border-radius: 3px; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
         #qrcode { display: inline-block; padding: 4px; border: 1px solid #eee; background: #fff; }
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
-        .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
+        
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+        
+        /* Modal Styles for Install Help */
+        #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
+        .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -107,13 +106,6 @@
         <img src="logo.png" alt="ER GeoLocate Logo" class="app-logo">
         <h1 style="color:var(--nhs-blue); font-size:1.4rem; margin:0;">ER GeoLocate</h1>
     </div>
-
-    <details>
-        <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
-        <div class="guide-content">
-            <img src="guide.jpg" alt="How to use ER GeoLocate" class="guide-img">
-        </div>
-    </details>
 
     <div class="input-row">
         <div class="input-group initials">
@@ -153,6 +145,13 @@
 
     <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div>
 
+    <details id="guide-details">
+        <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
+        <div class="guide-content">
+            <img src="guide.jpg" alt="How to use ER GeoLocate" class="guide-img">
+        </div>
+    </details>
+
     <div id="result-area">
         <div id="export-container">
             <div class="pdf-header">
@@ -174,7 +173,7 @@
                 <div class="data-item"><b>Speciality</b><span id="dept-display"></span></div>
                 
                 <div class="data-item"><b>UK Network Time</b><span id="ind-time"></span></div>
-                <div class="data-item"><b>Device Time</b><span id="dev-time"></span></div>
+                <div class="data-item"><b>Device ID</b><span id="device-display"></span></div>
                 
                 <div class="data-item"><b>GPS Coordinates</b><span id="coords-display"></span></div>
                 <div class="data-item"><b>Reference</b><span id="session-display"></span></div>
@@ -190,6 +189,29 @@
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
     </div>
+
+    <div class="footer-links">
+        <a href="#" onclick="openInstallHelp(); return false;">📲 Install App on Phone</a> | <span style="color:#999">© Digestiv</span>
+    </div>
+</div>
+
+<div id="install-modal">
+    <div class="modal-content">
+        <h3>Install App on Phone</h3>
+        <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your home screen:</p>
+        
+        <div style="margin-bottom: 15px;">
+            <b style="color:#000;">🤖 Android (Chrome)</b><br>
+            <span style="font-size:0.85rem; color:#666;">Tap the <b>three dots (⋮)</b> top right ➝ Select <b>"Add to Home screen"</b> or "Install App".</span>
+        </div>
+
+        <div>
+            <b style="color:#000;">🍎 iOS (Safari)</b><br>
+            <span style="font-size:0.85rem; color:#666;">Tap the <b>Share icon (⏍)</b> bottom center ➝ Scroll down and select <b>"Add to Home Screen"</b>.</span>
+        </div>
+
+        <button class="modal-close" onclick="closeInstallHelp()">Close</button>
+    </div>
 </div>
 
 <div class="copyright">© Digestiv</div>
@@ -197,6 +219,7 @@
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
+    // FULL UK TRUST LIST
     const trusts = [
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
         "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
@@ -281,6 +304,7 @@
         datalist.appendChild(option);
     });
 
+    // Check Local Storage on Load
     window.onload = function() {
         const savedEmp = localStorage.getItem('er_employer');
         if (savedEmp) {
@@ -315,6 +339,29 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     }
 
+    // RESTORED: Modal Logic
+    function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
+    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
+
+    // RESTORED: Device Type Detection
+    function getDeviceType() {
+        const ua = navigator.userAgent;
+        if (/android/i.test(ua)) return "Android Device";
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "iOS Device";
+        if (/Mac/.test(ua)) return "Mac Desktop";
+        if (/Win/.test(ua)) return "Windows Desktop";
+        return "Unknown Device";
+    }
+
+    // RESTORED: Spoofing Detection Logic
+    function detectSpoofingRisk(coords) {
+        let risk = { level: "LOW", reasons: [] };
+        if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
+        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) { risk.level = "MEDIUM"; risk.reasons.push("StaticAcc"); }
+        if (coords.altitude === null && coords.speed === null && coords.heading === null) { risk.level = "HIGH"; risk.reasons.push("IncompleteData"); }
+        return risk;
+    }
+
     // Progress Bar Helper
     const updateProgress = (pct, text) => {
         document.getElementById('rainbow-bar').style.width = pct + '%';
@@ -324,15 +371,16 @@
     // Main Verification Sequence
     async function startCapture() {
         document.getElementById('capBtn').disabled = true;
+        // HIDE THE GUIDE ON CLICK
+        document.getElementById('guide-details').style.display = 'none';
+        
         document.getElementById('progress-container').style.display = 'block';
         document.getElementById('status').innerText = "";
         
         let verifiedTime = null;
 
-        // Step 1: Google UK Check (Simulation + Attempt)
+        // Step 1: Google UK Check (Simulation)
         updateProgress(10, "Verifying with Google.co.uk...");
-        // Note: Real Google fetch is blocked by CORS in browsers. 
-        // We simulate a check here for UX, then move to reliable APIs.
         await new Promise(r => setTimeout(r, 800)); 
 
         // Step 2: WorldTimeAPI
@@ -365,7 +413,6 @@
 
         updateProgress(100, "Verification Complete.");
         
-        // Finalize
         const isVerified = !!verifiedTime;
         const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
 
@@ -385,6 +432,11 @@
         }
 
         navigator.geolocation.getCurrentPosition(async (pos) => {
+            // Run Detection Checks
+            const spoofData = detectSpoofingRisk(pos.coords);
+            const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
+            const deviceName = getDeviceType();
+
             const { latitude: lat, longitude: lon } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
@@ -406,12 +458,20 @@
                 facSection.style.display = "none";
             }
 
+            // Fill Data Grid
             document.getElementById('display-initials').innerText = initials;
             document.getElementById('pdf-initials').innerText = initials;
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
+            document.getElementById('device-display').innerText = deviceName; // Show Device
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+            
+            // Show Risk Tag if needed
+            if(spoofData.level !== "LOW") {
+                document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
+            }
+
             document.getElementById('session-display').innerText = sid;
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
@@ -419,7 +479,8 @@
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}`, 
+                // Updated QR string with Risk and Device
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|RISK:${spoofFlag}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             });
 
@@ -432,7 +493,7 @@
             document.getElementById('progress-container').style.display = 'none';
             document.getElementById('status').innerText = "GPS Error. Check settings."; 
             document.getElementById('capBtn').disabled = false; 
-        });
+        }, { enableHighAccuracy: true });
     }
 
     async function getNearestFacility(lat, lon) {
