@@ -7,7 +7,6 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <meta name="google" content="notranslate">
 
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
@@ -53,8 +52,6 @@
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
 
-        #status { text-align: center; font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: bold; min-height: 1.2em; }
-
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
         
@@ -71,17 +68,12 @@
         
         .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
         .unverified-text { color: var(--error-red); font-weight: bold; }
-        .risk-tag { color: var(--error-red); font-weight: bold; margin-left: 4px; font-size: 0.6rem; border: 1px solid var(--error-red); padding: 0 3px; border-radius: 3px; }
-        .warning-tag { color: var(--error-red); font-size: 0.6rem; font-weight: bold; display: block; margin-top: 2px; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
         #qrcode { display: inline-block; padding: 4px; border: 1px solid #eee; background: #fff; }
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
-        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
-        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-
         /* Guide Styles */
         details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { 
@@ -93,13 +85,15 @@
         .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
         .guide-img { width: 100%; height: auto; display: block; } 
 
-        /* Install Modal */
+        /* Footer & Modal Styles */
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+        
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        /* Footer Update */
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
         .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; font-size: 0.8rem; }
         .update-link:hover { text-decoration: none; transform: scale(1.1); display:inline-block; }
@@ -142,7 +136,7 @@
         </label>
     </div> 
 
-    <div id="status">Accept declaration to begin.</div> 
+    <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div> 
 
     <details id="guide-details">
         <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
@@ -211,7 +205,7 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.21 
+    © Digestiv | Version 1.17 
     <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
@@ -303,6 +297,7 @@
         "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
     ]; 
 
+    // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
     trusts.sort().forEach(t => {
         let option = document.createElement('option');
@@ -310,6 +305,7 @@
         datalist.appendChild(option);
     }); 
 
+    // Check Local Storage on Load
     window.onload = function() {
         const savedEmp = localStorage.getItem('er_employer');
         if (savedEmp) {
@@ -338,73 +334,45 @@
         document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
     } 
 
+    // Helper to abbreviate long Trust names for the QR code
     function abbreviateName(str) {
         if (!str) return "NA";
         return str.match(/\b(\w)/g).join('').toUpperCase();
     } 
 
+    // Modal Logic
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
-    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; } 
-
-    // --- HELPER: HELPER: Safe Timeout Fetch ---
-    function fetchWithTimeout(resource, timeout = 2500) {
-        const controller = new AbortController();
-        const id = setTimeout(() => controller.abort(), timeout);
-        return fetch(resource, { signal: controller.signal })
-            .then(response => {
-                clearTimeout(id);
-                return response;
-            })
-            .catch(error => {
-                clearTimeout(id);
-                throw error;
-            });
-    }
+    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
 
     async function getStrictUKTime() {
-        let verifiedTime = null;
-
-        // 1. WorldTimeAPI (Returns ISO with offset)
+        // Quad-Redundancy Logic
+        const apiEndpoints = [
+            'https://worldtimeapi.org/api/timezone/Europe/London',
+            'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
+        ];
+        for (let url of apiEndpoints) {
+            try {
+                const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
+                const data = await res.json();
+                if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+            } catch (e) {}
+        }
         try {
-            const res = await fetchWithTimeout('https://worldtimeapi.org/api/timezone/Europe/London');
+            const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
             const data = await res.json();
-            // This API returns specific "datetime" string which includes offset.
-            // We create Date object, then force output to Europe/London to avoid local Belize conversion.
-            if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            if (data.formatted) return { time: new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
         } catch(e) {}
-
-        // 2. TimeAPI (Returns ISO)
-        if (!verifiedTime) {
-            try {
-                const res = await fetchWithTimeout('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
-                const data = await res.json();
-                if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) {}
-        }
-
-        // 3. TimeZoneDB (Returns RAW STRING "2026-01-31 22:51:20")
-        // FIX: Manually parse this string. Do NOT put into new Date(), or it will assume Belize time.
-        if (!verifiedTime) {
-            try {
-                const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
-                const data = await res.json();
-                if (data.formatted) {
-                    // data.formatted is "2026-01-31 22:51:20"
-                    const parts = data.formatted.split(' ');
-                    const dateParts = parts[0].split('-');
-                    // Output format: "31/01/2026, 22:51:20"
-                    verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${parts[1]}`;
-                }
-            } catch(e) {}
-        }
-
-        // Fallback: Device time, but forced to display as London time
-        return { 
-            time: verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), 
-            verified: !!verifiedTime 
-        };
+        try {
+            const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
+            const serverDate = res.headers.get('date');
+            if (serverDate) return { time: new Date(serverDate).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+        } catch (e) {}
+        
+        // Fallback
+        return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     } 
 
+    // --- CRYPTOGRAPHIC REFERENCE GENERATOR ---
     async function generateSecureReference(timeStr, lat, lon) {
         const secret = "ER-GE0L0CATE"; 
         const raw = `${timeStr}${lat.toFixed(5)}${lon.toFixed(5)}${secret}`;
@@ -422,8 +390,10 @@
         const deptName = document.getElementById('wardDept').value || "Not Specified";
         const employer = document.getElementById('leadEmployer').value || "Not Specified";
         
+        // HIDE GUIDE ON CAPTURE
         document.getElementById('guide-details').style.display = 'none';
 
+        // Handle Persistence
         if (document.getElementById('rememberEmp').checked) {
             localStorage.setItem('er_employer', employer);
         } else {
@@ -435,12 +405,11 @@
 
         const timeObj = await getStrictUKTime();
         
-        status.innerText = "Acquiring GPS...";
-
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const empCode = abbreviateName(employer); 
             
+            // --- GENERATE SECURE REFERENCE ---
             const sid = await generateSecureReference(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
@@ -450,6 +419,7 @@
                 timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified, device based)</span>`;
             } 
 
+            // Facility 200m logic
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -464,29 +434,18 @@
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
-            document.getElementById('device-display').innerText = getDeviceType();
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
+            // Safe altitude handling for QR code
             const altValue = alt ? Math.round(alt) : 0;
-            const spoofData = detectSpoofingRisk(pos.coords);
-            const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
-
-            if (altValue === 0) {
-                document.getElementById('coords-display').innerHTML += ` <span class="warning-tag">(Mobile GPS device not used)</span>`;
-            } else {
-                document.getElementById('coords-display').innerHTML += ` (Alt: ${altValue}m)`;
-            }
-
-            if(spoofData.level !== "LOW") {
-                document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
-            }
 
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
+                // ADDED LOC & ALT to QR string
                 text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|LOC:${lat.toFixed(5)},${lon.toFixed(5)}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
@@ -496,7 +455,7 @@
             status.innerText = "Evidence Secured.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "GPS Error: " + err.message; 
+            status.innerText = "GPS Error."; 
             capBtn.disabled = false; 
         });
     } 
@@ -522,32 +481,13 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     } 
 
-    // Device Type Detection
-    function getDeviceType() {
-        const ua = navigator.userAgent;
-        if (/android/i.test(ua)) return "Android Device";
-        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "iOS Device";
-        if (/Mac/.test(ua)) return "Mac Desktop";
-        if (/Win/.test(ua)) return "Windows Desktop";
-        return "Unknown Device";
-    }
-
-    // Spoofing Detection Logic
-    function detectSpoofingRisk(coords) {
-        let risk = { level: "LOW", reasons: [] };
-        if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
-        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) { risk.level = "MEDIUM"; risk.reasons.push("StaticAcc"); }
-        if (coords.altitude === null && coords.speed === null && coords.heading === null) { risk.level = "HIGH"; risk.reasons.push("IncompleteData"); }
-        return risk;
-    }
-
     function downloadPDF() {
         const status = document.getElementById('status');
         const dlBtn = document.getElementById('dlBtn');
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
-        // Restored: Custom Filename Logic (YY-MM-DD-REF.pdf)
+        // Custom Filename Logic
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
