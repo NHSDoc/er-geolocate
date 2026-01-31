@@ -43,7 +43,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -51,6 +51,19 @@
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
+
+        #status { text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--nhs-blue); margin-bottom: 8px; min-height: 1.2em; }
+
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -78,30 +91,6 @@
         
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
         .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
-
-        /* Rainbow Progress Bar */
-        #progress-container { display: none; margin-bottom: 15px; }
-        .progress-track { width: 100%; background: #eee; height: 10px; border-radius: 5px; overflow: hidden; }
-        .progress-bar { 
-            height: 100%; width: 0%; 
-            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
-            background-size: 200% 100%;
-            animation: rainbowMove 2s linear infinite;
-            transition: width 0.4s ease;
-        }
-        @keyframes rainbowMove { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
-        #progress-text { text-align: center; font-size: 0.75rem; color: #666; margin-top: 5px; font-weight: bold; }
 
         /* Modal Styles */
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
@@ -143,13 +132,6 @@
 
     <button id="capBtn" class="btn btn-capture" onclick="startCapture()" disabled>📍 Verify & Capture Location</button>
     
-    <div id="progress-container">
-        <div class="progress-track">
-            <div id="rainbow-bar" class="progress-bar"></div>
-        </div>
-        <div id="progress-text">Connecting...</div>
-    </div>
-
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
@@ -157,7 +139,7 @@
         </label>
     </div> 
 
-    <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div> 
+    <div id="status">Accept declaration to begin.</div> 
 
     <details id="guide-details">
         <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
@@ -225,10 +207,10 @@
     </div>
 </div>
 
-<div class="copyright">© Digestiv | Version 1.4 <a onclick="forceReload()" title="Force Update">↻</a></div> 
+<div class="copyright">© Digestiv | Version 1.5 <a onclick="forceReload()" title="Force Update">↻</a></div> 
 
 <script>
-    const APP_VERSION = "1.4";
+    const APP_VERSION = "1.5";
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     // --- AUTO UPDATE CHECKER ---
@@ -405,23 +387,20 @@
         return 'ER-' + hashHex.substring(0, 8).toUpperCase();
     }
 
-    // Progress Bar Helper
-    const updateProgress = (pct, text) => {
-        document.getElementById('rainbow-bar').style.width = pct + '%';
-        document.getElementById('progress-text').innerText = text;
-    };
+    // Helper: Update Status Text instead of Rainbow Bar
+    function setStatus(msg) {
+        document.getElementById('status').innerText = msg;
+    }
 
-    // --- 4-STEP VERIFICATION LOGIC ---
+    // --- 4-STEP VERIFICATION LOGIC (Clean, No Visual Bar) ---
     async function startCapture() {
         document.getElementById('capBtn').disabled = true;
         document.getElementById('guide-details').style.display = 'none'; 
-        document.getElementById('progress-container').style.display = 'block';
-        document.getElementById('status').innerText = "";
         
         let verifiedTime = null;
 
         // Step 1: Infrastructure Check
-        updateProgress(10, "Verifying Global Infrastructure...");
+        setStatus("Verifying Global Infrastructure...");
         try {
             const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
             const text = await res.text();
@@ -433,7 +412,7 @@
 
         // Step 2: WorldTimeAPI
         if (!verifiedTime) {
-            updateProgress(40, "Checking Atomic Server 1...");
+            setStatus("Checking Atomic Server 1...");
             try {
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -443,7 +422,7 @@
 
         // Step 3: TimeAPI
         if (!verifiedTime) {
-            updateProgress(70, "Checking Atomic Server 2...");
+            setStatus("Checking Atomic Server 2...");
             try {
                 const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -453,7 +432,7 @@
 
         // Step 4: TimeZoneDB
         if (!verifiedTime) {
-            updateProgress(90, "Checking Backup Database...");
+            setStatus("Checking Backup Database...");
             try {
                 const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -461,7 +440,7 @@
             } catch(e) { console.log("TimeZoneDB failed"); }
         }
 
-        updateProgress(100, "Acquiring Secure GPS...");
+        setStatus("Acquiring Secure GPS...");
         
         const isVerified = !!verifiedTime;
         const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
@@ -469,23 +448,21 @@
         finishCapture(finalTime, isVerified);
     }
 
-    // --- NO-LOOP GPS HANDLER (Fix for Hang) ---
+    // --- NO-LOOP GPS HANDLER (Robust) ---
     async function finishCapture(timeString, verified) {
         
         const handleSuccess = async (pos) => {
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const secureRef = await generateSecureReference(timeString, lat, lon);
-            
-            // Pass the single high-quality reading to render
             renderResult(timeString, verified, lat, lon, alt, secureRef, pos.coords);
         };
 
         const handleError = (err) => {
             console.log("High accuracy failed, attempting fallback...");
-            // Immediate fallback to Low Accuracy if High fails (timeout or error)
+            setStatus("Switching to standard accuracy...");
+            // Immediate fallback to Low Accuracy if High fails
             navigator.geolocation.getCurrentPosition(handleSuccess, (finalErr) => {
-                document.getElementById('progress-container').style.display = 'none';
-                document.getElementById('status').innerText = "GPS Error: Check Location Services.";
+                setStatus("GPS Error: Check Location Services.");
                 document.getElementById('capBtn').disabled = false;
             }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
         };
@@ -561,10 +538,9 @@
             width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
         });
 
-        document.getElementById('progress-container').style.display = 'none';
         document.getElementById('result-area').style.display = 'block';
         document.getElementById('dlBtn').style.display = 'flex';
-        document.getElementById('status').innerText = "Evidence Secured.";
+        setStatus("Evidence Secured.");
         document.getElementById('capBtn').disabled = false;
     }
 
