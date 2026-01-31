@@ -225,10 +225,10 @@
     </div>
 </div>
 
-<div class="copyright">© Digestiv | Version 1.3 <a onclick="forceReload()" title="Force Update">↻</a></div> 
+<div class="copyright">© Digestiv | Version 1.4 <a onclick="forceReload()" title="Force Update">↻</a></div> 
 
 <script>
-    const APP_VERSION = "1.3";
+    const APP_VERSION = "1.4";
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     // --- AUTO UPDATE CHECKER ---
@@ -469,63 +469,33 @@
         finishCapture(finalTime, isVerified);
     }
 
-    // --- GPS AVERAGING LOGIC (Optimized to prevent hang) ---
+    // --- NO-LOOP GPS HANDLER (Fix for Hang) ---
     async function finishCapture(timeString, verified) {
-        // Optimized: 2 readings, 0.5s apart, max 5s timeout per reading
-        const readings = [];
-        const requiredReadings = 2; 
-
-        for (let i = 0; i < requiredReadings; i++) {
-            updateProgress(100, `Averaging GPS Signal (${i+1}/${requiredReadings})...`);
-            try {
-                const pos = await new Promise((resolve, reject) => {
-                    navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                        enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
-                    });
-                });
-                readings.push(pos.coords);
-            } catch (e) {
-                // If high accuracy fails, try low accuracy fallback immediately
-                try {
-                    const fallbackPos = await new Promise((resolve, reject) => {
-                        navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                            enableHighAccuracy: false, timeout: 5000, maximumAge: 0 
-                        });
-                    });
-                    readings.push(fallbackPos.coords);
-                } catch(e2) { console.log("GPS attempt failed"); }
-            }
-            // Reduced delay for speed
-            await new Promise(r => setTimeout(r, 500));
-        }
-
-        if (readings.length === 0) {
-            document.getElementById('progress-container').style.display = 'none';
-            document.getElementById('status').innerText = "GPS Error: Could not acquire lock.";
-            document.getElementById('capBtn').disabled = false;
-            return;
-        }
-
-        // Calculate Averages
-        let sumLat = 0, sumLon = 0, sumAlt = 0;
-        let altCount = 0;
         
-        readings.forEach(r => {
-            sumLat += r.latitude;
-            sumLon += r.longitude;
-            if (r.altitude !== null) {
-                sumAlt += r.altitude;
-                altCount++;
-            }
+        const handleSuccess = async (pos) => {
+            const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
+            const secureRef = await generateSecureReference(timeString, lat, lon);
+            
+            // Pass the single high-quality reading to render
+            renderResult(timeString, verified, lat, lon, alt, secureRef, pos.coords);
+        };
+
+        const handleError = (err) => {
+            console.log("High accuracy failed, attempting fallback...");
+            // Immediate fallback to Low Accuracy if High fails (timeout or error)
+            navigator.geolocation.getCurrentPosition(handleSuccess, (finalErr) => {
+                document.getElementById('progress-container').style.display = 'none';
+                document.getElementById('status').innerText = "GPS Error: Check Location Services.";
+                document.getElementById('capBtn').disabled = false;
+            }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
+        };
+
+        // REQUEST: Single High Accuracy shot with 10s timeout
+        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
+            enableHighAccuracy: true, 
+            timeout: 10000, 
+            maximumAge: 0 
         });
-
-        const avgLat = sumLat / readings.length;
-        const avgLon = sumLon / readings.length;
-        const avgAlt = altCount > 0 ? (sumAlt / altCount) : 0;
-        
-        const secureRef = await generateSecureReference(timeString, avgLat, avgLon);
-
-        renderResult(timeString, verified, avgLat, avgLon, avgAlt, secureRef, readings[0]); 
     }
 
     function renderResult(timeString, verified, lat, lon, alt, sid, rawCoords) {
@@ -557,7 +527,7 @@
         document.getElementById('device-display').innerText = deviceName; 
         
         let coordText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-        if (alt === 0) {
+        if (!alt || alt === 0) {
             coordText += `<span class="warning-tag">(Mobile GPS device not used)</span>`;
         } else {
             coordText += ` (Alt: ${Math.round(alt)}m)`;
@@ -581,11 +551,13 @@
             }
         });
 
-        // Generate QR with Altitude included
+        // Safe altitude value for QR code
+        const altValue = alt ? Math.round(alt) : 0;
+
         const qrDiv = document.getElementById('qrcode');
         qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, { 
-            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${Math.round(alt)}|RISK:${spoofFlag}`, 
+            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${altValue}|RISK:${spoofFlag}`, 
             width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
         });
 
