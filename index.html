@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
     
@@ -90,15 +95,7 @@
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
-        /* Style for the refresh icon */
-        .update-link { 
-            color: var(--nhs-blue); 
-            font-weight: bold; 
-            cursor: pointer; 
-            text-decoration: none; 
-            margin-left: 5px; 
-            font-size: 0.8rem;
-        }
+        .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; font-size: 0.8rem; }
         .update-link:hover { text-decoration: none; transform: scale(1.1); display:inline-block; }
     </style>
 </head>
@@ -208,15 +205,15 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.14 
-    <a class="update-link" onclick="forceUpdate()" title="Force Refresh/Update">↻</a>
+    © Digestiv | Version 1.16 
+    <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     function forceUpdate() {
-        if(confirm("Refresh app to latest version?")) {
+        if(confirm("Download latest version from server?")) {
             var url = window.location.href.split('?')[0];
             window.location.href = url + '?t=' + new Date().getTime();
         }
@@ -490,7 +487,7 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
-        // Custom Filename Logic
+        // 6. NEW: Custom Filename Logic
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
