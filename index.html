@@ -3,11 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
     
@@ -94,10 +89,17 @@
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
-        /* 2. NEW: Version and Update Link Styling */
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
-        .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; }
-        .update-link:hover { text-decoration: underline; }
+        /* Style for the refresh icon */
+        .update-link { 
+            color: var(--nhs-blue); 
+            font-weight: bold; 
+            cursor: pointer; 
+            text-decoration: none; 
+            margin-left: 5px; 
+            font-size: 0.8rem;
+        }
+        .update-link:hover { text-decoration: none; transform: scale(1.1); display:inline-block; }
     </style>
 </head>
 <body> 
@@ -206,17 +208,15 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.12 
-    <a class="update-link" onclick="forceUpdate()" title="Clear cache and reload">[↻ Refresh/Update]</a>
+    © Digestiv | Version 1.14 
+    <a class="update-link" onclick="forceUpdate()" title="Force Refresh/Update">↻</a>
 </div>
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
-    // 4. NEW: Cache Busting Reload Function
     function forceUpdate() {
-        if(confirm("Download latest version from server?")) {
-            // Appends a unique timestamp to URL to bypass browser cache
+        if(confirm("Refresh app to latest version?")) {
             var url = window.location.href.split('?')[0];
             window.location.href = url + '?t=' + new Date().getTime();
         }
@@ -448,8 +448,8 @@
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                // 5. NEW: Added Altitude to QR string
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|ALT:${altValue}`, 
+                // ADDED LOC & ALT to QR string
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|LOC:${lat.toFixed(5)},${lon.toFixed(5)}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
 
@@ -490,7 +490,7 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
-        // 6. NEW: Custom Filename Logic
+        // Custom Filename Logic
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
