@@ -43,7 +43,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -78,6 +78,9 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+
         /* Guide Styles */
         details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { 
@@ -131,7 +134,7 @@
         </label>
     </div> 
 
-    <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
+    <button id="capBtn" class="btn btn-capture" onclick="startCapture()" disabled>📍 Verify & Capture Location</button>
     
     <div class="probity-box">
         <label>
@@ -209,7 +212,7 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.18 
+    © Digestiv | Version 1.19 
     <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
@@ -223,6 +226,7 @@
         }
     }
 
+    // FULL UK TRUST LIST
     const trusts = [
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
         "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
@@ -300,6 +304,7 @@
         "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
     ]; 
 
+    // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
     trusts.sort().forEach(t => {
         let option = document.createElement('option');
@@ -307,6 +312,7 @@
         datalist.appendChild(option);
     }); 
 
+    // Check Local Storage on Load
     window.onload = function() {
         const savedEmp = localStorage.getItem('er_employer');
         if (savedEmp) {
@@ -340,6 +346,7 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     } 
 
+    // Modal Logic
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
     function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
 
@@ -361,14 +368,16 @@
     async function getStrictUKTime() {
         let verifiedTime = null;
 
-        // 1. WorldTimeAPI (Returns ISO with offset - Safe)
+        // 1. WorldTimeAPI (Returns ISO with offset)
         try {
             const res = await fetchWithTimeout('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
+            // This API returns specific "datetime" string which includes offset.
+            // We create Date object, then force output to Europe/London to avoid local Belize conversion.
             if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
         } catch(e) {}
 
-        // 2. TimeAPI (Returns ISO - Safe)
+        // 2. TimeAPI (Returns ISO)
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
@@ -377,34 +386,23 @@
             } catch(e) {}
         }
 
-        // 3. TimeZoneDB (Returns formatted string "YYYY-MM-DD HH:MM:SS" - NEEDS FORMATTING)
-        // BUG FIX: Do NOT use new Date() here as it assumes local time (Belize).
-        // Instead, just reformat the string directly since it IS London time.
+        // 3. TimeZoneDB (Returns RAW STRING "2026-01-31 22:51:20")
+        // FIX: Manually parse this string. Do NOT put into new Date(), or it will assume Belize time.
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
                 const data = await res.json();
                 if (data.formatted) {
                     // data.formatted is "2026-01-31 22:51:20"
-                    // Reformat to "31/01/2026, 22:51:20"
                     const parts = data.formatted.split(' ');
                     const dateParts = parts[0].split('-');
+                    // Output format: "31/01/2026, 22:51:20"
                     verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${parts[1]}`;
                 }
             } catch(e) {}
         }
 
-        // 4. Google Backup (Robust)
-        if (!verifiedTime) {
-            try {
-                const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-                // Note: Headers are opaque in no-cors, so this is a last resort sync attempt
-                // If we get here, we fallback to device time converted to London
-                verifiedTime = new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) {}
-        }
-
-        // Fallback to Device Time (converted to London)
+        // Fallback: Device time, but forced to display as London time
         return { 
             time: verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), 
             verified: !!verifiedTime 
