@@ -225,18 +225,16 @@
     </div>
 </div>
 
-<div class="copyright">© Digestiv | Version 1.2 <a onclick="forceReload()" title="Force Update">↻</a></div> 
+<div class="copyright">© Digestiv | Version 1.3 <a onclick="forceReload()" title="Force Update">↻</a></div> 
 
 <script>
-    // 2. VERSION CONTROL VARIABLE
-    const APP_VERSION = "1.2";
+    const APP_VERSION = "1.3";
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     // --- AUTO UPDATE CHECKER ---
     async function checkForUpdates() {
         if (window.location.protocol.startsWith('http')) {
             try {
-                // Fetch this file again with no-cache to see if version changed on server
                 const response = await fetch(window.location.href + '?t=' + Date.now(), { cache: "no-store" });
                 const text = await response.text();
                 const match = text.match(/const APP_VERSION = "([^"]+)";/);
@@ -247,7 +245,6 @@
             } catch(e) { console.log("Update check skipped"); }
         }
     }
-    // Run update check on load
     checkForUpdates();
 
     function forceReload() {
@@ -369,7 +366,6 @@
         document.getElementById('capBtn').disabled = !document.getElementById('probityCheck').checked;
     } 
 
-    // Helper to abbreviate long Trust names for the QR code
     function abbreviateName(str) {
         if (!str) return "NA";
         return str.match(/\b(\w)/g).join('').toUpperCase();
@@ -473,18 +469,18 @@
         finishCapture(finalTime, isVerified);
     }
 
-    // --- GPS AVERAGING LOGIC ---
+    // --- GPS AVERAGING LOGIC (Optimized to prevent hang) ---
     async function finishCapture(timeString, verified) {
-        // We will take 3 readings to get an average
+        // Optimized: 2 readings, 0.5s apart, max 5s timeout per reading
         const readings = [];
-        const requiredReadings = 3;
+        const requiredReadings = 2; 
 
         for (let i = 0; i < requiredReadings; i++) {
             updateProgress(100, `Averaging GPS Signal (${i+1}/${requiredReadings})...`);
             try {
                 const pos = await new Promise((resolve, reject) => {
                     navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                        enableHighAccuracy: true, timeout: 10000, maximumAge: 0 
+                        enableHighAccuracy: true, timeout: 5000, maximumAge: 0 
                     });
                 });
                 readings.push(pos.coords);
@@ -493,13 +489,14 @@
                 try {
                     const fallbackPos = await new Promise((resolve, reject) => {
                         navigator.geolocation.getCurrentPosition(resolve, reject, { 
-                            enableHighAccuracy: false, timeout: 10000, maximumAge: 0 
+                            enableHighAccuracy: false, timeout: 5000, maximumAge: 0 
                         });
                     });
                     readings.push(fallbackPos.coords);
                 } catch(e2) { console.log("GPS attempt failed"); }
             }
-            await new Promise(r => setTimeout(r, 1000));
+            // Reduced delay for speed
+            await new Promise(r => setTimeout(r, 500));
         }
 
         if (readings.length === 0) {
@@ -584,13 +581,11 @@
             }
         });
 
-        // Safe altitude value for QR code (defaults to 0 if null)
-        const altValue = alt ? Math.round(alt) : 0;
-
+        // Generate QR with Altitude included
         const qrDiv = document.getElementById('qrcode');
         qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, { 
-            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${altValue}|RISK:${spoofFlag}`, 
+            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${Math.round(alt)}|RISK:${spoofFlag}`, 
             width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
         });
 
