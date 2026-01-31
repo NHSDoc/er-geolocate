@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
     
@@ -88,7 +93,11 @@
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        
+        /* 2. NEW: Version and Update Link Styling */
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
+        .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; }
+        .update-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body> 
@@ -196,9 +205,23 @@
     </div>
 </div> 
 
+<div class="copyright">
+    © Digestiv | Version 1.12 
+    <a class="update-link" onclick="forceUpdate()" title="Clear cache and reload">[↻ Refresh/Update]</a>
+</div>
+
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
+    // 4. NEW: Cache Busting Reload Function
+    function forceUpdate() {
+        if(confirm("Download latest version from server?")) {
+            // Appends a unique timestamp to URL to bypass browser cache
+            var url = window.location.href.split('?')[0];
+            window.location.href = url + '?t=' + new Date().getTime();
+        }
+    }
+
     // FULL UK TRUST LIST
     const trusts = [
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
@@ -352,6 +375,17 @@
         return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     } 
 
+    // --- CRYPTOGRAPHIC REFERENCE GENERATOR ---
+    async function generateSecureReference(timeStr, lat, lon) {
+        const secret = "ER-GE0L0CATE"; 
+        const raw = `${timeStr}${lat.toFixed(5)}${lon.toFixed(5)}${secret}`;
+        const msgBuffer = new TextEncoder().encode(raw);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return 'ER-' + hashHex.substring(0, 8).toUpperCase();
+    }
+
     async function captureData() {
         const status = document.getElementById('status');
         const capBtn = document.getElementById('capBtn');
@@ -376,8 +410,10 @@
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
-            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
+            
+            // --- GENERATE SECURE REFERENCE ---
+            const sid = await generateSecureReference(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -412,6 +448,7 @@
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
+                // 5. NEW: Added Altitude to QR string
                 text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
@@ -453,12 +490,21 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
+        // 6. NEW: Custom Filename Logic
+        const d = new Date();
+        const y = d.getFullYear().toString().substr(-2);
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const refId = document.getElementById('session-display').innerText;
+        
+        const filename = `${y}-${m}-${day}-${refId}.pdf`;
+
         html2canvas(document.getElementById('export-container'), { 
             useCORS: true, scale: 2.2 
         }).then(canvas => {
             const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
-            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            pdf.save(filename);
             status.innerText = "Downloaded.";
             dlBtn.disabled = false;
         });
