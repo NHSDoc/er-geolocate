@@ -7,6 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta name="google" content="notranslate">
 
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
@@ -43,7 +44,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -92,15 +93,13 @@
         .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
         .guide-img { width: 100%; height: auto; display: block; } 
 
-        /* Footer & Modal Styles */
-        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
-        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-        
+        /* Install Modal */
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
         .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
         
+        /* Footer Update */
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
         .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; font-size: 0.8rem; }
         .update-link:hover { text-decoration: none; transform: scale(1.1); display:inline-block; }
@@ -212,7 +211,7 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.20 
+    © Digestiv | Version 1.21 
     <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
@@ -304,7 +303,6 @@
         "Southern Health and Social Care Trust", "Western Health and Social Care Trust", "Northern Ireland Ambulance Service"
     ]; 
 
-    // Populate Datalist
     const datalist = document.getElementById('nhsTrusts');
     trusts.sort().forEach(t => {
         let option = document.createElement('option');
@@ -312,7 +310,6 @@
         datalist.appendChild(option);
     }); 
 
-    // Check Local Storage on Load
     window.onload = function() {
         const savedEmp = localStorage.getItem('er_employer');
         if (savedEmp) {
@@ -346,7 +343,6 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     } 
 
-    // Modal Logic
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
     function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; } 
 
@@ -368,14 +364,16 @@
     async function getStrictUKTime() {
         let verifiedTime = null;
 
-        // 1. WorldTimeAPI (Returns ISO with offset - Safe)
+        // 1. WorldTimeAPI (Returns ISO with offset)
         try {
             const res = await fetchWithTimeout('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
+            // This API returns specific "datetime" string which includes offset.
+            // We create Date object, then force output to Europe/London to avoid local Belize conversion.
             if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
         } catch(e) {}
 
-        // 2. TimeAPI (Returns ISO - Safe)
+        // 2. TimeAPI (Returns ISO)
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
@@ -385,16 +383,16 @@
         }
 
         // 3. TimeZoneDB (Returns RAW STRING "2026-01-31 22:51:20")
-        // FIX: Manually parse this string. Do NOT put into new Date() or it assumes Belize time.
+        // FIX: Manually parse this string. Do NOT put into new Date(), or it will assume Belize time.
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
                 const data = await res.json();
                 if (data.formatted) {
                     // data.formatted is "2026-01-31 22:51:20"
-                    // Reformat to "31/01/2026, 22:51:20"
                     const parts = data.formatted.split(' ');
                     const dateParts = parts[0].split('-');
+                    // Output format: "31/01/2026, 22:51:20"
                     verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${parts[1]}`;
                 }
             } catch(e) {}
@@ -406,6 +404,16 @@
             verified: !!verifiedTime 
         };
     } 
+
+    async function generateSecureReference(timeStr, lat, lon) {
+        const secret = "ER-GE0L0CATE"; 
+        const raw = `${timeStr}${lat.toFixed(5)}${lon.toFixed(5)}${secret}`;
+        const msgBuffer = new TextEncoder().encode(raw);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        return 'ER-' + hashHex.substring(0, 8).toUpperCase();
+    }
 
     async function captureData() {
         const status = document.getElementById('status');
@@ -427,10 +435,13 @@
 
         const timeObj = await getStrictUKTime();
         
+        status.innerText = "Acquiring GPS...";
+
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude: lat, longitude: lon } = pos.coords;
-            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const empCode = abbreviateName(employer); 
+            
+            const sid = await generateSecureReference(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -439,7 +450,6 @@
                 timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified, device based)</span>`;
             } 
 
-            // Facility 200m logic
             const facility = await getNearestFacility(lat, lon);
             const facSection = document.getElementById('facility-section');
             if (facility && facility.dist <= 0.2) {
@@ -454,15 +464,30 @@
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
+            document.getElementById('device-display').innerText = getDeviceType();
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
+            const altValue = alt ? Math.round(alt) : 0;
+            const spoofData = detectSpoofingRisk(pos.coords);
+            const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
+
+            if (altValue === 0) {
+                document.getElementById('coords-display').innerHTML += ` <span class="warning-tag">(Mobile GPS device not used)</span>`;
+            } else {
+                document.getElementById('coords-display').innerHTML += ` (Alt: ${altValue}m)`;
+            }
+
+            if(spoofData.level !== "LOW") {
+                document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
+            }
+
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|LOC:${lat.toFixed(5)},${lon.toFixed(5)}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
 
@@ -471,7 +496,7 @@
             status.innerText = "Evidence Secured.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "GPS Error."; 
+            status.innerText = "GPS Error: " + err.message; 
             capBtn.disabled = false; 
         });
     } 
@@ -497,18 +522,46 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     } 
 
+    // Device Type Detection
+    function getDeviceType() {
+        const ua = navigator.userAgent;
+        if (/android/i.test(ua)) return "Android Device";
+        if (/iPad|iPhone|iPod/.test(ua) && !window.MSStream) return "iOS Device";
+        if (/Mac/.test(ua)) return "Mac Desktop";
+        if (/Win/.test(ua)) return "Windows Desktop";
+        return "Unknown Device";
+    }
+
+    // Spoofing Detection Logic
+    function detectSpoofingRisk(coords) {
+        let risk = { level: "LOW", reasons: [] };
+        if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
+        if (coords.accuracy <= 20 && Number.isInteger(coords.accuracy)) { risk.level = "MEDIUM"; risk.reasons.push("StaticAcc"); }
+        if (coords.altitude === null && coords.speed === null && coords.heading === null) { risk.level = "HIGH"; risk.reasons.push("IncompleteData"); }
+        return risk;
+    }
+
     function downloadPDF() {
         const status = document.getElementById('status');
         const dlBtn = document.getElementById('dlBtn');
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
+        // Restored: Custom Filename Logic (YY-MM-DD-REF.pdf)
+        const d = new Date();
+        const y = d.getFullYear().toString().substr(-2);
+        const m = (d.getMonth() + 1).toString().padStart(2, '0');
+        const day = d.getDate().toString().padStart(2, '0');
+        const refId = document.getElementById('session-display').innerText;
+        
+        const filename = `${y}-${m}-${day}-${refId}.pdf`;
+
         html2canvas(document.getElementById('export-container'), { 
             useCORS: true, scale: 2.2 
         }).then(canvas => {
             const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
-            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            pdf.save(filename);
             status.innerText = "Downloaded.";
             dlBtn.disabled = false;
         });
