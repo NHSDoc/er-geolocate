@@ -43,7 +43,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -52,18 +52,7 @@
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
 
-        #status { text-align: center; font-size: 0.8rem; font-weight: bold; color: var(--nhs-blue); margin-bottom: 8px; min-height: 1.2em; }
-
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
+        #status { text-align: center; font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: bold; min-height: 1.2em; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -89,10 +78,21 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
+
+        /* Footer & Modal Styles */
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
         .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-
-        /* Modal Styles */
+        
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
@@ -130,7 +130,7 @@
         </label>
     </div> 
 
-    <button id="capBtn" class="btn btn-capture" onclick="startCapture()" disabled>📍 Verify & Capture Location</button>
+    <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
     
     <div class="probity-box">
         <label>
@@ -207,10 +207,10 @@
     </div>
 </div>
 
-<div class="copyright">© Digestiv | Version 1.5 <a onclick="forceReload()" title="Force Update">↻</a></div> 
+<div class="copyright">© Digestiv | Version 1.6 <a onclick="forceReload()" title="Force Update">↻</a></div> 
 
 <script>
-    const APP_VERSION = "1.5";
+    const APP_VERSION = "1.6";
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     // --- AUTO UPDATE CHECKER ---
@@ -387,20 +387,16 @@
         return 'ER-' + hashHex.substring(0, 8).toUpperCase();
     }
 
-    // Helper: Update Status Text instead of Rainbow Bar
-    function setStatus(msg) {
-        document.getElementById('status').innerText = msg;
-    }
-
-    // --- 4-STEP VERIFICATION LOGIC (Clean, No Visual Bar) ---
+    // --- 4-STEP VERIFICATION LOGIC (Status Text Only) ---
     async function startCapture() {
+        const status = document.getElementById('status');
         document.getElementById('capBtn').disabled = true;
         document.getElementById('guide-details').style.display = 'none'; 
         
         let verifiedTime = null;
 
         // Step 1: Infrastructure Check
-        setStatus("Verifying Global Infrastructure...");
+        status.innerText = "Verifying Global Infrastructure...";
         try {
             const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
             const text = await res.text();
@@ -412,7 +408,7 @@
 
         // Step 2: WorldTimeAPI
         if (!verifiedTime) {
-            setStatus("Checking Atomic Server 1...");
+            status.innerText = "Checking Atomic Server 1...";
             try {
                 const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -422,7 +418,7 @@
 
         // Step 3: TimeAPI
         if (!verifiedTime) {
-            setStatus("Checking Atomic Server 2...");
+            status.innerText = "Checking Atomic Server 2...";
             try {
                 const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -432,7 +428,7 @@
 
         // Step 4: TimeZoneDB
         if (!verifiedTime) {
-            setStatus("Checking Backup Database...");
+            status.innerText = "Checking Backup Database...";
             try {
                 const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(2000) });
                 const data = await res.json();
@@ -440,39 +436,29 @@
             } catch(e) { console.log("TimeZoneDB failed"); }
         }
 
-        setStatus("Acquiring Secure GPS...");
+        status.innerText = "Acquiring Secure GPS...";
         
         const isVerified = !!verifiedTime;
         const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
 
-        finishCapture(finalTime, isVerified);
+        // Trigger simple geolocation
+        captureLocation(finalTime, isVerified);
     }
 
-    // --- NO-LOOP GPS HANDLER (Robust) ---
-    async function finishCapture(timeString, verified) {
-        
-        const handleSuccess = async (pos) => {
+    // --- SIMPLE GPS LOGIC (Reverted to 1b style) ---
+    function captureLocation(timeString, verified) {
+        navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
+            
+            // Logic moved inside success callback
             const secureRef = await generateSecureReference(timeString, lat, lon);
             renderResult(timeString, verified, lat, lon, alt, secureRef, pos.coords);
-        };
 
-        const handleError = (err) => {
-            console.log("High accuracy failed, attempting fallback...");
-            setStatus("Switching to standard accuracy...");
-            // Immediate fallback to Low Accuracy if High fails
-            navigator.geolocation.getCurrentPosition(handleSuccess, (finalErr) => {
-                setStatus("GPS Error: Check Location Services.");
-                document.getElementById('capBtn').disabled = false;
-            }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 0 });
-        };
-
-        // REQUEST: Single High Accuracy shot with 10s timeout
-        navigator.geolocation.getCurrentPosition(handleSuccess, handleError, { 
-            enableHighAccuracy: true, 
-            timeout: 10000, 
-            maximumAge: 0 
+        }, (err) => {
+            document.getElementById('status').innerText = "GPS Error: " + err.message;
+            document.getElementById('capBtn').disabled = false;
         });
+        // Note: No 'options' object passed, uses browser defaults (usually fast)
     }
 
     function renderResult(timeString, verified, lat, lon, alt, sid, rawCoords) {
@@ -540,7 +526,7 @@
 
         document.getElementById('result-area').style.display = 'block';
         document.getElementById('dlBtn').style.display = 'flex';
-        setStatus("Evidence Secured.");
+        document.getElementById('status').innerText = "Evidence Secured.";
         document.getElementById('capBtn').disabled = false;
     }
 
