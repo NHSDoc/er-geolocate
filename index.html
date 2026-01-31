@@ -30,23 +30,12 @@
         
         .employer-row { margin-bottom: 10px; }
         
-        /* ALIGNMENT FIX: Flexbox with explicit vertical centering */
         .remember-box {
-            display: flex;
-            align-items: center; 
-            margin-top: 6px;
-            cursor: pointer;
-            font-size: 0.75rem;
-            color: #555;
-            user-select: none;
+            display: flex; align-items: center; margin-top: 6px; cursor: pointer;
+            font-size: 0.75rem; color: #555; user-select: none;
         }
         .remember-box input {
-            margin: 0 6px 0 0; /* Right margin only */
-            width: 16px;
-            height: 16px;
-            accent-color: var(--nhs-blue);
-            vertical-align: middle;
-            cursor: pointer;
+            margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
         .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
@@ -56,7 +45,7 @@
 
         .probity-box { background: var(--warning-amber); border: 2px solid #ffcc00; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.75rem; line-height: 1.2; color: #444; }
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
-        .probity-box input { margin-top: 2px; transform: scale(1.1); } 
+        .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -80,6 +69,26 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
+
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
+
+        /* Footer & Modal Styles */
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+        
+        #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
+        .modal-close { display: block; width: 100%; padding: 10px; margin-top: 15px; background: #eee; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body> 
@@ -115,11 +124,18 @@
     <div class="probity-box">
         <label>
             <input type="checkbox" id="probityCheck" onchange="toggleButton()">
-            <span><b>Probity:</b> I certify recording clinical hours outside my rostered schedule. Bound by GMC guidance, I confirm this data is accurate.</span>
+            <span><b>Probity:</b> I certify the accurate recording of my clinical hours outside my rostered schedule. I recognise my obligations under GMC Good Clinical Practice in doing so.</span>
         </label>
     </div> 
 
     <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div> 
+
+    <details id="guide-details">
+        <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
+        <div class="guide-content">
+            <img src="guide.jpg" alt="How to use ER GeoLocate" class="guide-img">
+        </div>
+    </details>
 
     <div id="result-area">
         <div id="export-container">
@@ -158,14 +174,32 @@
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
     </div>
+
+    <div class="footer-links">
+        <a href="#" onclick="openInstallHelp(); return false;">📲 Install App on Phone</a> | <span style="color:#999">© Digestiv</span>
+    </div>
 </div> 
 
-<div class="copyright">© Digestiv | Version 1b</div> 
+<div id="install-modal">
+    <div class="modal-content">
+        <h3>Install App on Phone</h3>
+        <p style="font-size: 0.9rem; color: #444; margin-bottom: 10px;">For quicker access, add this tool to your home screen:</p>
+        <div style="margin-bottom: 15px;">
+            <b style="color:#000;">🤖 Android (Chrome)</b><br>
+            <span style="font-size:0.85rem; color:#666;">Tap the <b>three dots (⋮)</b> top right ➝ Select <b>"Add to Home screen"</b>.</span>
+        </div>
+        <div>
+            <b style="color:#000;">🍎 iOS (Safari)</b><br>
+            <span style="font-size:0.85rem; color:#666;">Tap the <b>Share icon (⏍)</b> bottom center ➝ Scroll down and select <b>"Add to Home Screen"</b>.</span>
+        </div>
+        <button class="modal-close" onclick="closeInstallHelp()">Close</button>
+    </div>
+</div>
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
-    // FULL UK TRUST LIST (England, Scotland, Wales, NI)
+    // FULL UK TRUST LIST
     const trusts = [
         "Barts Health NHS Trust", "Chelsea and Westminster Hospital NHS Foundation Trust", "Croydon Health Services NHS Trust",
         "Epsom and St Helier University Hospitals NHS Trust", "Great Ormond Street Hospital for Children NHS Foundation Trust",
@@ -286,8 +320,12 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     } 
 
+    // Modal Logic
+    function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
+    function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; }
+
     async function getStrictUKTime() {
-        // Quad-Redundancy Logic
+        // Quad-Redundancy Logic - WorldTimeAPI & TimeAPI
         const apiEndpoints = [
             'https://worldtimeapi.org/api/timezone/Europe/London',
             'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
@@ -299,39 +337,18 @@
                 if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
             } catch (e) {}
         }
+        // TimeZoneDB Backup
         try {
             const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
             const data = await res.json();
             if (data.formatted) return { time: new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
         } catch(e) {}
-        try {
-            const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-            const serverDate = res.headers.get('date');
-            if (serverDate) return { time: new Date(serverDate).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
-        } catch (e) {}
         
-        // Fallback
+        // Removed Google HEAD check to prevent hanging.
+        
+        // Fallback to device time
         return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
     } 
-
-    // --- CRYPTOGRAPHIC REFERENCE GENERATOR ---
-    async function generateSecureID(timeStr, lat, lon) {
-        const secret = "ER-GE0L0CATE";
-        // Combine inputs + secret
-        const rawString = `${timeStr}${lat.toFixed(5)}${lon.toFixed(5)}${secret}`;
-        
-        // Encoder for hashing
-        const encoder = new TextEncoder();
-        const data = encoder.encode(rawString);
-        
-        // Perform SHA-256 hash
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        
-        // Return prefix + first 8 characters of hash
-        return 'ER-' + hashHex.substring(0, 8).toUpperCase();
-    }
 
     async function captureData() {
         const status = document.getElementById('status');
@@ -340,6 +357,9 @@
         const deptName = document.getElementById('wardDept').value || "Not Specified";
         const employer = document.getElementById('leadEmployer').value || "Not Specified";
         
+        // HIDE GUIDE
+        document.getElementById('guide-details').style.display = 'none';
+
         // Handle Persistence
         if (document.getElementById('rememberEmp').checked) {
             localStorage.setItem('er_employer', employer);
@@ -353,11 +373,9 @@
         const timeObj = await getStrictUKTime();
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
+            const { latitude: lat, longitude: lon } = pos.coords;
+            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
-            
-            // --- GENERATE SECURE REFERENCE ---
-            const sid = await generateSecureID(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -386,13 +404,10 @@
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
-            // Safe altitude handling for QR code
-            const altValue = alt ? Math.round(alt) : 0;
-
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|ALT:${altValue}`, 
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
 
@@ -433,21 +448,12 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
-        // Generate Filename: YY-MM-DD-REF-ID.pdf
-        const d = new Date();
-        const y = d.getFullYear().toString().substr(-2);
-        const m = (d.getMonth() + 1).toString().padStart(2, '0');
-        const day = d.getDate().toString().padStart(2, '0');
-        const refId = document.getElementById('session-display').innerText;
-        
-        const filename = `${y}-${m}-${day}-${refId}.pdf`;
-
         html2canvas(document.getElementById('export-container'), { 
             useCORS: true, scale: 2.2 
         }).then(canvas => {
             const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
-            pdf.save(filename);
+            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
             status.innerText = "Downloaded.";
             dlBtn.disabled = false;
         });
