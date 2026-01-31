@@ -78,7 +78,7 @@
         summary:hover { background-color: #eef3f7; }
         summary::-webkit-details-marker { display: none; }
         .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
+        .guide-img { width: 100%; height: auto; display: block; } 
 
         /* Footer & Modal Styles */
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
@@ -135,7 +135,7 @@
         <div class="guide-content">
             <img src="guide.jpg" alt="How to use ER GeoLocate" class="guide-img">
         </div>
-    </details>
+    </details> 
 
     <div id="result-area">
         <div id="export-container">
@@ -173,7 +173,7 @@
             </div>
         </div>
         <button id="dlBtn" class="btn btn-download" onclick="downloadPDF()">Download ER GeoLocate Evidence</button>
-    </div>
+    </div> 
 
     <div class="footer-links">
         <a href="#" onclick="openInstallHelp(); return false;">📲 Install App on Phone</a> | <span style="color:#999">© Digestiv</span>
@@ -194,7 +194,7 @@
         </div>
         <button class="modal-close" onclick="closeInstallHelp()">Close</button>
     </div>
-</div>
+</div> 
 
 <script>
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
@@ -299,11 +299,11 @@
     function updatePlaceholders() {
         const initInput = document.getElementById('userInitials');
         const specInput = document.getElementById('wardDept');
-        if (!initInput.value) {
+        if (document.activeElement !== initInput && !initInput.value) {
             const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             initInput.placeholder = letters.charAt(Math.floor(Math.random() * 26)) + letters.charAt(Math.floor(Math.random() * 26));
         }
-        if (!specInput.value) {
+        if (document.activeElement !== specInput && !specInput.value) {
             specInput.placeholder = specialties[Math.floor(Math.random() * specialties.length)];
         }
     }
@@ -375,7 +375,7 @@
         const timeObj = await getStrictUKTime();
         
         navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude: lat, longitude: lon } = pos.coords;
+            const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
             const empCode = abbreviateName(employer); 
             
@@ -406,10 +406,13 @@
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
+            // Safe altitude handling for QR code
+            const altValue = alt ? Math.round(alt) : 0;
+
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
-                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}`, 
+                text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
 
