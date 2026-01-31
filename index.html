@@ -43,7 +43,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -53,6 +53,17 @@
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
 
         #status { text-align: center; font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: bold; min-height: 1.2em; }
+
+        /* Guide Styles */
+        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
+        summary { 
+            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
+            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
+        }
+        summary:hover { background-color: #eef3f7; }
+        summary::-webkit-details-marker { display: none; }
+        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
+        .guide-img { width: 100%; height: auto; display: block; }
 
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
@@ -78,21 +89,10 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
-        /* Guide Styles */
-        details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
-        summary { 
-            background-color: #f8f9fa; padding: 10px; cursor: pointer; font-size: 0.85rem; 
-            font-weight: bold; color: var(--nhs-blue); text-align: center; list-style: none; user-select: none;
-        }
-        summary:hover { background-color: #eef3f7; }
-        summary::-webkit-details-marker { display: none; }
-        .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
-        .guide-img { width: 100%; height: auto; display: block; }
-
-        /* Footer & Modal Styles */
         .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
         .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-        
+
+        /* Modal Styles */
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
@@ -130,7 +130,7 @@
         </label>
     </div> 
 
-    <button id="capBtn" class="btn btn-capture" onclick="captureData()" disabled>📍 Verify & Capture Location</button>
+    <button id="capBtn" class="btn btn-capture" onclick="startCapture()" disabled>📍 Verify & Capture Location</button>
     
     <div class="probity-box">
         <label>
@@ -207,10 +207,10 @@
     </div>
 </div>
 
-<div class="copyright">© Digestiv | Version 1.6 <a onclick="forceReload()" title="Force Update">↻</a></div> 
+<div class="copyright">© Digestiv | Version 1.7 <a onclick="forceReload()" title="Force Update">↻</a></div> 
 
 <script>
-    const APP_VERSION = "1.6";
+    const APP_VERSION = "1.7";
     const API_KEY = 'AIzaSyAS4xNopFGKYRQwssv2cfkFO-fCiHinYT8';
     
     // --- AUTO UPDATE CHECKER ---
@@ -387,78 +387,88 @@
         return 'ER-' + hashHex.substring(0, 8).toUpperCase();
     }
 
-    // --- 4-STEP VERIFICATION LOGIC (Status Text Only) ---
+    // Helper: Update Status Text
+    function setStatus(msg) {
+        document.getElementById('status').innerText = msg;
+    }
+
+    // --- HELPER: Compatible Fetch Timeout ---
+    function fetchWithTimeout(resource, timeout = 2500) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        return fetch(resource, { signal: controller.signal })
+            .then(response => {
+                clearTimeout(id);
+                return response;
+            })
+            .catch(error => {
+                clearTimeout(id);
+                throw error;
+            });
+    }
+
+    // --- MAIN CAPTURE LOGIC (Robust) ---
     async function startCapture() {
-        const status = document.getElementById('status');
-        document.getElementById('capBtn').disabled = true;
-        document.getElementById('guide-details').style.display = 'none'; 
+        const btn = document.getElementById('capBtn');
+        const guide = document.getElementById('guide-details');
         
-        let verifiedTime = null;
-
-        // Step 1: Infrastructure Check
-        status.innerText = "Verifying Global Infrastructure...";
         try {
-            const res = await fetch('https://www.cloudflare.com/cdn-cgi/trace', { signal: AbortSignal.timeout(2000) });
-            const text = await res.text();
-            const tsMatch = text.match(/ts=([0-9\.]+)/);
-            if (tsMatch && tsMatch[1]) {
-                verifiedTime = new Date(parseFloat(tsMatch[1]) * 1000).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            }
-        } catch(e) { console.log("Cloudflare Trace failed"); }
+            btn.disabled = true;
+            if(guide) guide.style.display = 'none'; 
+            
+            setStatus("Syncing verification data...");
+            
+            let verifiedTime = null;
 
-        // Step 2: WorldTimeAPI
-        if (!verifiedTime) {
-            status.innerText = "Checking Atomic Server 1...";
+            // Step 1: WorldTimeAPI
             try {
-                const res = await fetch('https://worldtimeapi.org/api/timezone/Europe/London', { signal: AbortSignal.timeout(2000) });
+                const res = await fetchWithTimeout('https://worldtimeapi.org/api/timezone/Europe/London');
                 const data = await res.json();
                 if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
             } catch(e) { console.log("WorldTimeAPI failed"); }
-        }
 
-        // Step 3: TimeAPI
-        if (!verifiedTime) {
-            status.innerText = "Checking Atomic Server 2...";
-            try {
-                const res = await fetch('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London', { signal: AbortSignal.timeout(2000) });
-                const data = await res.json();
-                if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { console.log("TimeAPI failed"); }
-        }
+            // Step 2: TimeAPI (Backup)
+            if (!verifiedTime) {
+                try {
+                    const res = await fetchWithTimeout('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
+                    const data = await res.json();
+                    if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+                } catch(e) { console.log("TimeAPI failed"); }
+            }
 
-        // Step 4: TimeZoneDB
-        if (!verifiedTime) {
-            status.innerText = "Checking Backup Database...";
-            try {
-                const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(2000) });
-                const data = await res.json();
-                if (data.formatted) verifiedTime = new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'});
-            } catch(e) { console.log("TimeZoneDB failed"); }
-        }
+            // Step 3: TimeZoneDB (Backup)
+            if (!verifiedTime) {
+                try {
+                    const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
+                    const data = await res.json();
+                    if (data.formatted) verifiedTime = new Date(data.formatted).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+                } catch(e) { console.log("TimeZoneDB failed"); }
+            }
 
-        status.innerText = "Acquiring Secure GPS...";
-        
-        const isVerified = !!verifiedTime;
-        const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            const isVerified = !!verifiedTime;
+            const finalTime = verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'});
 
-        // Trigger simple geolocation
-        captureLocation(finalTime, isVerified);
-    }
-
-    // --- SIMPLE GPS LOGIC (Reverted to 1b style) ---
-    function captureLocation(timeString, verified) {
-        navigator.geolocation.getCurrentPosition(async (pos) => {
-            const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
+            setStatus("Acquiring GPS...");
             
-            // Logic moved inside success callback
-            const secureRef = await generateSecureReference(timeString, lat, lon);
-            renderResult(timeString, verified, lat, lon, alt, secureRef, pos.coords);
+            // --- STANDARD GPS (Version 1b Style) ---
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
+                
+                // Success: Generate Secure Ref & Render
+                const secureRef = await generateSecureReference(finalTime, lat, lon);
+                renderResult(finalTime, isVerified, lat, lon, alt, secureRef, pos.coords);
 
-        }, (err) => {
-            document.getElementById('status').innerText = "GPS Error: " + err.message;
-            document.getElementById('capBtn').disabled = false;
-        });
-        // Note: No 'options' object passed, uses browser defaults (usually fast)
+            }, (err) => {
+                // GPS Failed
+                alert("GPS Error: " + err.message + "\nEnsure Location Services are ON.");
+                setStatus("GPS Error.");
+                btn.disabled = false;
+            });
+
+        } catch (fatalError) {
+            alert("Critical Error: " + fatalError.message);
+            btn.disabled = false;
+        }
     }
 
     function renderResult(timeString, verified, lat, lon, alt, sid, rawCoords) {
@@ -490,10 +500,13 @@
         document.getElementById('device-display').innerText = deviceName; 
         
         let coordText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
-        if (!alt || alt === 0) {
+        // Safe altitude check
+        const safeAlt = (alt !== null && alt !== undefined) ? Math.round(alt) : 0;
+        
+        if (safeAlt === 0) {
             coordText += `<span class="warning-tag">(Mobile GPS device not used)</span>`;
         } else {
-            coordText += ` (Alt: ${Math.round(alt)}m)`;
+            coordText += ` (Alt: ${safeAlt}m)`;
         }
         
         if(spoofData.level !== "LOW") {
@@ -514,19 +527,16 @@
             }
         });
 
-        // Safe altitude value for QR code
-        const altValue = alt ? Math.round(alt) : 0;
-
         const qrDiv = document.getElementById('qrcode');
         qrDiv.innerHTML = ""; 
         new QRCode(qrDiv, { 
-            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${altValue}|RISK:${spoofFlag}`, 
+            text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeString}|V:${verified ? 'Y':'N'}|DEV:${deviceName}|ALT:${safeAlt}|RISK:${spoofFlag}`, 
             width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
         });
 
         document.getElementById('result-area').style.display = 'block';
         document.getElementById('dlBtn').style.display = 'flex';
-        document.getElementById('status').innerText = "Evidence Secured.";
+        setStatus("Evidence Secured.");
         document.getElementById('capBtn').disabled = false;
     }
 
@@ -557,7 +567,6 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true;
 
-        // Custom Filename: YY-MM-DD-REF-ID.pdf
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
