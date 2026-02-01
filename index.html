@@ -7,6 +7,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
+    <meta name="google" content="notranslate">
 
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
@@ -43,7 +44,7 @@
             margin: 0 6px 0 0; width: 16px; height: 16px; accent-color: var(--nhs-blue); vertical-align: middle; cursor: pointer;
         } 
 
-        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; margin-bottom: 12px; display: flex; align-items: center; justify-content: center; }
         .btn-capture { background: var(--nhs-blue); color: white; }
         .btn-capture:disabled { background: #ccc; cursor: not-allowed; }
         .btn-download { background: var(--success-green); color: white; display: none; } 
@@ -78,6 +79,9 @@
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+
         /* Guide Styles */
         details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { 
@@ -100,6 +104,7 @@
         
         .copyright { text-align: center; color: #999; font-size: 0.65rem; margin: 10px 0; }
         .update-link { color: var(--nhs-blue); font-weight: bold; cursor: pointer; text-decoration: none; margin-left: 5px; font-size: 0.8rem; }
+        .update-link:hover { text-decoration: none; transform: scale(1.1); display:inline-block; }
     </style>
 </head>
 <body> 
@@ -208,7 +213,7 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.22 
+    © Digestiv | Version 1.23 
     <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
@@ -342,6 +347,7 @@
         return str.match(/\b(\w)/g).join('').toUpperCase();
     } 
 
+    // Modal Logic
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
     function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; } 
 
@@ -360,34 +366,43 @@
             });
     }
 
+    // --- MANUALLY PARSED TIME FUNCTION (Fixes Belize Bug) ---
     async function getStrictUKTime() {
         let verifiedTime = null;
 
-        // 1. WorldTimeAPI (Returns ISO with offset - Safe)
+        // 1. WorldTimeAPI (Returns ISO like "2026-01-31T22:51:00...")
         try {
             const res = await fetchWithTimeout('https://worldtimeapi.org/api/timezone/Europe/London');
             const data = await res.json();
-            if (data.datetime) verifiedTime = new Date(data.datetime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+            if (data.datetime) {
+                // Split on 'T' to get date and time separately
+                const parts = data.datetime.split('T');
+                const dateParts = parts[0].split('-');
+                const timeParts = parts[1].substring(0, 8); // Remove offset/milliseconds
+                verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${timeParts}`;
+            }
         } catch(e) {}
 
-        // 2. TimeAPI (Returns ISO - Safe)
+        // 2. TimeAPI (Returns ISO like "2026-01-31T22:51:00")
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://timeapi.io/api/Time/current/zone?timeZone=Europe/London');
                 const data = await res.json();
-                if (data.dateTime) verifiedTime = new Date(data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'});
+                if (data.dateTime) {
+                    const parts = data.dateTime.split('T');
+                    const dateParts = parts[0].split('-');
+                    const timeParts = parts[1].substring(0, 8);
+                    verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${timeParts}`;
+                }
             } catch(e) {}
         }
 
-        // 3. TimeZoneDB (Returns RAW STRING "2026-01-31 22:51:20")
-        // FIX: Manually parse this string. Do NOT put into new Date(), or it assumes Belize time.
+        // 3. TimeZoneDB (Returns String "2026-01-31 22:51:20")
         if (!verifiedTime) {
             try {
                 const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
                 const data = await res.json();
                 if (data.formatted) {
-                    // data.formatted is "2026-01-31 22:51:20"
-                    // Reformat to "31/01/2026, 22:51:20"
                     const parts = data.formatted.split(' ');
                     const dateParts = parts[0].split('-');
                     verifiedTime = `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${parts[1]}`;
@@ -395,7 +410,7 @@
             } catch(e) {}
         }
 
-        // Fallback: Device time, but forced to display as London time
+        // Fallback: Device time (Might be Belize time if fallback is used)
         return { 
             time: verifiedTime || new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), 
             verified: !!verifiedTime 
@@ -438,7 +453,8 @@
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const empCode = abbreviateName(employer); 
             
-            const sid = 'ER-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+            // Generate Secure Ref based on CAPTURED time and location
+            const sid = await generateSecureReference(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
@@ -461,6 +477,7 @@
             document.getElementById('employer-display').innerText = employer;
             document.getElementById('dept-display').innerText = deptName;
             document.getElementById('dev-time').innerText = new Date().toLocaleString('en-GB');
+            document.getElementById('device-display').innerText = getDeviceType();
             document.getElementById('coords-display').innerText = `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
             document.getElementById('session-display').innerText = sid;
             
@@ -470,11 +487,11 @@
             const spoofData = detectSpoofingRisk(pos.coords);
             const spoofFlag = spoofData.level === "HIGH" ? "RISK" : "OK";
 
+            // Warning if GPS is "Simulated" or altitude is 0
             if (altValue === 0) {
                 document.getElementById('coords-display').innerHTML += ` <span class="warning-tag">(Mobile GPS device not used)</span>`;
-            } else {
-                document.getElementById('coords-display').innerHTML += ` (Alt: ${altValue}m)`;
             }
+            // NO TEXT DISPLAY OF ALTITUDE HERE - REMOVED
 
             if(spoofData.level !== "LOW") {
                 document.getElementById('coords-display').innerHTML += ` <span class="risk-tag">⚠️ ${spoofData.reasons.join(',')}</span>`;
@@ -483,6 +500,7 @@
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
             new QRCode(qrDiv, { 
+                // ALTITUDE AND LOC IN QR
                 text: `REF:${sid}|EMP:${empCode}|USER:${initials}|TIME:${timeObj.time}|V:${timeObj.verified ? 'Y':'N'}|LOC:${lat.toFixed(5)},${lon.toFixed(5)}|ALT:${altValue}`, 
                 width: 130, height: 130, correctLevel: QRCode.CorrectLevel.L
             }); 
@@ -518,7 +536,6 @@
         return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
     } 
 
-    // Device Type Detection
     function getDeviceType() {
         const ua = navigator.userAgent;
         if (/android/i.test(ua)) return "Android Device";
@@ -528,7 +545,6 @@
         return "Unknown Device";
     }
 
-    // Spoofing Detection Logic
     function detectSpoofingRisk(coords) {
         let risk = { level: "LOW", reasons: [] };
         if (coords.altitude === null) { risk.level = "MEDIUM"; risk.reasons.push("NoAlt"); }
@@ -543,6 +559,7 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
+        // PDF FILENAME LOGIC RESTORED
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
@@ -556,7 +573,7 @@
         }).then(canvas => {
             const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
-            pdf.save(`ER_Evidence_${Date.now()}.pdf`);
+            pdf.save(filename);
             status.innerText = "Downloaded.";
             dlBtn.disabled = false;
         });
