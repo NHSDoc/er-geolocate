@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="google" content="notranslate">
+
     <title>ER GeoLocate</title>
     <link rel="icon" type="image/png" href="logo.png">
     
@@ -47,6 +53,8 @@
         .probity-box label { display: flex; align-items: flex-start; gap: 8px; }
         .probity-box input { margin-top: 2px; transform: scale(1.1); flex-shrink: 0; } 
 
+        #status { text-align: center; font-size: 0.75rem; color: #666; margin-bottom: 8px; font-weight: bold; min-height: 1.2em; }
+
         #result-area { display: none; width: 100%; }
         #export-container { padding: 10px; background: #fff; border: 1px solid #ddd; border-radius: 6px; width: 100%; box-sizing: border-box; }
         
@@ -63,12 +71,16 @@
         
         .full-width { grid-column: 1 / -1; border-bottom: 1px solid #eee; padding-bottom: 4px; margin-bottom: 2px; }
         .unverified-text { color: var(--error-red); font-weight: bold; }
+        .warning-tag { color: var(--error-red); font-size: 0.6rem; font-weight: bold; display: block; margin-top: 2px; }
         
         .qr-area { text-align: center; border-top: 1px dashed #ccc; padding-top: 8px; margin-top: 4px; }
         #qrcode { display: inline-block; padding: 4px; border: 1px solid #eee; background: #fff; }
         
         #facility-section { font-size: 0.65rem; color: #555; margin-top: 4px; border-top: 1px solid #eee; padding-top: 4px; display: none; }
         
+        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
+        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
+
         /* Guide Styles */
         details { margin-top: 10px; margin-bottom: 10px; border: 1px solid #eee; border-radius: 8px; overflow: hidden; }
         summary { 
@@ -80,10 +92,7 @@
         .guide-content { padding: 0; text-align: center; border-top: 1px solid #eee; }
         .guide-img { width: 100%; height: auto; display: block; } 
 
-        /* Footer & Modal Styles */
-        .footer-links { text-align: center; margin-top: 15px; font-size: 0.75rem; color: #666; }
-        .footer-links a { color: var(--nhs-blue); text-decoration: none; font-weight: bold; margin: 0 5px; cursor: pointer; }
-        
+        /* Install Modal */
         #install-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 20px; border-radius: 12px; width: 85%; max-width: 320px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         .modal-content h3 { color: var(--nhs-blue); margin-top: 0; }
@@ -130,7 +139,7 @@
         </label>
     </div> 
 
-    <div id="status" style="text-align:center; font-size: 0.75rem; color: #666; margin-bottom: 8px;">Accept declaration to begin.</div> 
+    <div id="status">Accept declaration to begin.</div> 
 
     <details id="guide-details">
         <summary>ℹ️ Guide: When & Why to Report (Tap to view)</summary>
@@ -199,7 +208,7 @@
 </div> 
 
 <div class="copyright">
-    © Digestiv | Version 1.24 
+    © Digestiv | Version 1.25 
     <a class="update-link" onclick="forceUpdate()" title="Force Refresh">↻</a>
 </div>
 
@@ -334,9 +343,50 @@
     function openInstallHelp() { document.getElementById('install-modal').style.display = 'flex'; }
     function closeInstallHelp() { document.getElementById('install-modal').style.display = 'none'; } 
 
-    // --- TIME FUNCTION WITH TEXT PARSING FIX ---
+    // --- HELPER: Safe Timeout Fetch ---
+    function fetchWithTimeout(resource, timeout = 3500) {
+        const controller = new AbortController();
+        const id = setTimeout(() => controller.abort(), timeout);
+        return fetch(resource, { signal: controller.signal })
+            .then(response => {
+                clearTimeout(id);
+                return response;
+            })
+            .catch(error => {
+                clearTimeout(id);
+                throw error;
+            });
+    }
+
+    // --- STRICT TEXT PARSER (Fixes Belize Time Bug) ---
+    function formatTimeFromRaw(rawString) {
+        // Formats "2026-02-01T14:00:00" or "2026-02-01 14:00:00" to "01/02/2026, 14:00"
+        try {
+            // Remove offset part if exists (anything after + or Z)
+            let clean = rawString.split('+')[0].split('Z')[0]; 
+            
+            let datePart, timePart;
+            if (clean.includes('T')) {
+                [datePart, timePart] = clean.split('T');
+            } else {
+                [datePart, timePart] = clean.split(' ');
+            }
+            
+            // datePart is YYYY-MM-DD
+            const [y, m, d] = datePart.split('-');
+            
+            // timePart is HH:MM:SS...
+            const time = timePart.substring(0, 8); // Keep HH:MM:SS
+            
+            return `${d}/${m}/${y}, ${time}`;
+        } catch (e) {
+            return null;
+        }
+    }
+
     async function getStrictUKTime() {
-        // Quad-Redundancy Logic
+        let verifiedTime = null;
+
         const apiEndpoints = [
             'https://worldtimeapi.org/api/timezone/Europe/London',
             'https://timeapi.io/api/Time/current/zone?timeZone=Europe/London'
@@ -344,39 +394,34 @@
         
         for (let url of apiEndpoints) {
             try {
-                // Kept 1.17 timeout logic
-                const res = await fetch(url, { signal: AbortSignal.timeout(3500) });
+                const res = await fetchWithTimeout(url);
                 const data = await res.json();
-                // Force UK output to avoid Belize time calc
-                if (data.datetime || data.dateTime) return { time: new Date(data.datetime || data.dateTime).toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: true };
+                const raw = data.datetime || data.dateTime;
+                if (raw) {
+                    verifiedTime = formatTimeFromRaw(raw);
+                    if (verifiedTime) break; 
+                }
             } catch (e) {}
         }
         
-        try {
-            // FIX: Manual Parse for TimeZoneDB
-            const res = await fetch('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London', { signal: AbortSignal.timeout(3500) });
-            const data = await res.json();
-            if (data.formatted) {
-                // data.formatted comes as "2026-01-31 22:51:20"
-                // Split string manually so phone doesn't do timezone math
-                const parts = data.formatted.split(' ');
-                const dateParts = parts[0].split('-');
-                const timeParts = parts[1];
-                // Return "31/01/2026, 22:51:20"
-                return { time: `${dateParts[2]}/${dateParts[1]}/${dateParts[0]}, ${timeParts}`, verified: true };
-            }
-        } catch(e) {}
-        
-        try {
-            const res = await fetch('https://www.google.com', { method: 'HEAD', mode: 'no-cors' });
-            // Note: Google check retained from 1.17 as requested, but might fail silently in no-cors
-        } catch (e) {}
-        
-        // Fallback
-        return { time: new Date().toLocaleString('en-GB', {timeZone: 'Europe/London'}), verified: false };
+        // 3. TimeZoneDB
+        if (!verifiedTime) {
+            try {
+                const res = await fetchWithTimeout('https://api.timezonedb.com/v2.1/get-time-zone?key=L2M0Z8R7X9G1&format=json&by=zone&zone=Europe/London');
+                const data = await res.json();
+                if (data.formatted) {
+                    verifiedTime = formatTimeFromRaw(data.formatted);
+                }
+            } catch(e) {}
+        }
+
+        // Fallback: Device time (Might be incorrect if in Belize, but flagged as Unverified)
+        return { 
+            time: verifiedTime || new Date().toLocaleString('en-GB'), 
+            verified: !!verifiedTime 
+        };
     } 
 
-    // --- RESTORED: CRYPTO REFERENCE ---
     async function generateSecureReference(timeStr, lat, lon) {
         const secret = "ER-GE0L0CATE"; 
         const raw = `${timeStr}${lat.toFixed(5)}${lon.toFixed(5)}${secret}`;
@@ -407,18 +452,19 @@
 
         const timeObj = await getStrictUKTime();
         
+        status.innerText = "Acquiring GPS...";
+
         navigator.geolocation.getCurrentPosition(async (pos) => {
             const { latitude: lat, longitude: lon, altitude: alt } = pos.coords;
             const empCode = abbreviateName(employer); 
             
-            // --- RESTORED: Reference Generation ---
             const sid = await generateSecureReference(timeObj.time, lat, lon);
             
             const timeEl = document.getElementById('ind-time');
             if (timeObj.verified) {
                 timeEl.innerText = timeObj.time;
             } else {
-                timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified, device based)</span>`;
+                timeEl.innerHTML = `${timeObj.time} <span class="unverified-text">(Unverified)</span>`;
             } 
 
             const facility = await getNearestFacility(lat, lon);
@@ -440,7 +486,6 @@
             
             document.getElementById('map-img').src = `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lon}&zoom=15&size=600x200&markers=color:blue%7Clabel:H%7C${lat},${lon}&key=${API_KEY}`;
             
-            // --- RESTORED: ALT/LOC in QR ONLY ---
             const altValue = alt ? Math.round(alt) : 0;
             const qrDiv = document.getElementById('qrcode');
             qrDiv.innerHTML = ""; 
@@ -454,7 +499,7 @@
             status.innerText = "Evidence Secured.";
             capBtn.disabled = false;
         }, (err) => { 
-            status.innerText = "GPS Error."; 
+            status.innerText = "GPS Error: " + err.message; 
             capBtn.disabled = false; 
         });
     } 
@@ -486,19 +531,34 @@
         status.innerText = "Building PDF...";
         dlBtn.disabled = true; 
 
-        // --- RESTORED: PDF FILENAME LOGIC ---
+        // PDF Filename Logic
         const d = new Date();
         const y = d.getFullYear().toString().substr(-2);
         const m = (d.getMonth() + 1).toString().padStart(2, '0');
         const day = d.getDate().toString().padStart(2, '0');
         const refId = document.getElementById('session-display').innerText;
-        
         const filename = `${y}-${m}-${day}-${refId}.pdf`;
 
+        // 2. NEW: Add invisible text layer for validation
+        const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
+        
+        // Add raw text data (white on white, but searchable/scrapable)
+        pdf.setTextColor(255, 255, 255); 
+        pdf.setFontSize(1); 
+        
+        const dataText = `
+            REF: ${refId}
+            USER: ${document.getElementById('display-initials').innerText}
+            TIME: ${document.getElementById('ind-time').innerText}
+            COORDS: ${document.getElementById('coords-display').innerText}
+            EMP: ${document.getElementById('employer-display').innerText}
+        `;
+        pdf.text(dataText, 0, 0); // Write invisible text first
+
+        // Add Image Layer Over Top
         html2canvas(document.getElementById('export-container'), { 
             useCORS: true, scale: 2.2 
         }).then(canvas => {
-            const pdf = new jspdf.jsPDF('p', 'mm', 'a5');
             pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 10, 8, 128, 0);
             pdf.save(filename);
             status.innerText = "Downloaded.";
